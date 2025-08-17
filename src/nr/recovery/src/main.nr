@@ -1,10 +1,11 @@
 mod config;
 mod vote_note;
+pub mod test;
 
 use dep::aztec::macros::aztec;
 
 #[aztec]
-pub contract NulWallet {
+pub contract Recovery {
     use crate::config::Config;
 
     use dep::address_note::address_note::AddressNote;
