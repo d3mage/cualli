@@ -10,7 +10,10 @@ pub contract Recovery {
 
     use dep::address_note::address_note::AddressNote;
     use dep::aztec::context::PrivateContext;
-    use dep::aztec::macros::{functions::{initializer, private, public, view}, storage::storage};
+    use dep::aztec::macros::{
+        functions::{initializer, private, public, utility, view},
+        storage::storage,
+    };
     use dep::aztec::messages::logs::note::encode_and_encrypt_note;
     use dep::aztec::note::note_interface::NoteProperties;
     use dep::aztec::note::note_viewer_options::NoteViewerOptions;
@@ -28,6 +31,7 @@ pub contract Recovery {
         contacts: PrivateSet<AddressNote, Context>,
         votes: PrivateSet<VoteNote, Context>,
         vote_ended: PublicMutable<bool, Context>,
+        //TODO: add a threshold value
     }
 
     #[public]
@@ -41,14 +45,51 @@ pub contract Recovery {
         let caller = context.msg_sender();
 
         let config = storage.config.read();
-        assert(caller == config.owner, "Only the contract owner can add contacts");
+        assert(caller == config.owner, "Not owner");
 
         let note = AddressNote::new(address, caller);
+
+        //TODO: check if contact already exists
         storage.contacts.insert(note).emit(encode_and_encrypt_note(
             &mut context,
             config.owner,
             address,
         ));
+    }
+
+    #[public]
+    fn set_threshold(threshold: u32) {
+        //TODO: finish the function
+    }
+
+    #[private]
+    fn remove_contact(address: AztecAddress) {
+        let caller = context.msg_sender();
+
+        let config = storage.config.read();
+        assert(caller == config.owner, "Not owner");
+
+        //TODO:
+        //1. find notes
+        //2. pop found notes, but with the first todo, we should have only one note
+
+    }
+
+    #[private]
+    fn start_vote(candidate: EthAddress) {
+        //TODO:
+        //1. check if voter is in contacts
+        //2. check if vote with this candidate already exists
+        //3. create a new note with vote
+        //4. optional: maybe send a note to each contact to vote?
+    }
+
+    #[private]
+    fn vote(candidate: EthAddress) {
+        //TODO:
+        //1. check if voter is in contacts
+        //2. nullify the note or something
+        //3. check if threshold
     }
 
     #[private]
@@ -62,12 +103,13 @@ pub contract Recovery {
         notes.len() > 0
     }
 
+    //TODO: private function to get note by address
+
     #[private]
     fn contacts_length() -> u32 {
         let mut options = NoteGetterOptions::new();
-        options.limit = 10;
+        // options.limit = 10;
         let notes = storage.contacts.get_notes(options);
-
         notes.len() as u32
     }
 

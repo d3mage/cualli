@@ -32,9 +32,10 @@ pub unconstrained fn deploy_recovery_contract(
     portal: EthAddress,
 ) -> ContractInstance {
     let initializer_call_interface = Recovery::interface().constructor(owner, portal);
-    let contract_instance = env
-        .deploy("./@recovery", "Recovery")
-        .with_public_void_initializer(owner, initializer_call_interface);
+    let contract_instance = env.deploy("./@recovery", "Recovery").with_public_void_initializer(
+        owner,
+        initializer_call_interface,
+    );
     env.advance_block_by(1);
 
     contract_instance
