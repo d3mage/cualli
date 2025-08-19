@@ -1,27 +1,29 @@
 mod config;
 mod vote_note;
+mod address_note;
 pub mod test;
 
 use dep::aztec::macros::aztec;
 
+//BIG TODO! 
+//1. Think about which functions need to use NoteViewer https://docs.aztec.network/developers/reference/smart_contract_reference/storage/private_state#view_notes
+//2.
 
 #[aztec]
 pub contract Recovery {
     use crate::config::Config;
     use crate::vote_note::VoteNote;
 
-    use dep::address_note::address_note::AddressNote;
-    use dep::aztec::macros::{
-        functions::{initializer, private, public},
-        storage::storage,
-    };
+    use crate::address_note::AddressNote;
+    use dep::aztec::macros::{functions::{initializer, private, public}, storage::storage};
     use dep::aztec::messages::logs::note::encode_and_encrypt_note;
     use dep::aztec::note::note_interface::NoteProperties;
     use dep::aztec::oracle::debug_log::{debug_log, debug_log_format};
-    use dep::aztec::prelude::{AztecAddress, EthAddress, PrivateSet, PublicImmutable, PublicMutable, SharedMutable};
+    use dep::aztec::prelude::{
+        AztecAddress, EthAddress, PrivateSet, PublicImmutable, PublicMutable, SharedMutable,
+    };
     use dep::aztec::prelude::NoteGetterOptions;
     use dep::aztec::utils::comparison::Comparator;
-
 
     pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
@@ -48,8 +50,6 @@ pub contract Recovery {
         let config = storage.config.read();
         assert(caller == config.owner, "Not owner");
 
-        let note = AddressNote::new(address, caller);
-
         //TODO: check if contact already exists
         storage.contacts.insert(note).emit(encode_and_encrypt_note(
             &mut context,
@@ -66,7 +66,6 @@ pub contract Recovery {
         assert(caller == config.owner, "Not owner");
 
         storage.threshold.schedule_value_change(threshold);
-
     }
 
     #[public]
@@ -115,12 +114,24 @@ pub contract Recovery {
         notes.len() > 0
     }
 
-    //TODO: private function to get note by address
+    #[private]
+    fn get_note_by_address(address: AztecAddress) -> Option<AddressNote> {
+        let notes = storage.contacts.get_notes(NoteGetterOptions::new().select(
+            AddressNote::properties().address,
+            Comparator.EQ,
+            address,
+        ));
+
+        if notes.len() > 0 {
+            Option::some(notes.get(0).note)
+        } else {
+            Option::none()
+        }
+    }
 
     #[private]
     fn contacts_length() -> u32 {
         let mut options = NoteGetterOptions::new();
-        // options.limit = 10;
         let notes = storage.contacts.get_notes(options);
         notes.len() as u32
     }
