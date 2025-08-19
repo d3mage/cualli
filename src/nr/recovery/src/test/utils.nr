@@ -31,7 +31,8 @@ pub unconstrained fn deploy_recovery_contract(
     owner: AztecAddress,
     portal: EthAddress,
 ) -> ContractInstance {
-    let initializer_call_interface = Recovery::interface().constructor(owner, portal);
+    let threshold = 3;
+    let initializer_call_interface = Recovery::interface().constructor(owner, portal, threshold);
     let contract_instance = env.deploy("./@recovery", "Recovery").with_public_void_initializer(
         owner,
         initializer_call_interface,

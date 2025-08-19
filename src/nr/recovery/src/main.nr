@@ -4,26 +4,26 @@ pub mod test;
 
 use dep::aztec::macros::aztec;
 
+
 #[aztec]
 pub contract Recovery {
     use crate::config::Config;
+    use crate::vote_note::VoteNote;
 
     use dep::address_note::address_note::AddressNote;
-    use dep::aztec::context::PrivateContext;
     use dep::aztec::macros::{
-        functions::{initializer, private, public, utility, view},
+        functions::{initializer, private, public},
         storage::storage,
     };
     use dep::aztec::messages::logs::note::encode_and_encrypt_note;
     use dep::aztec::note::note_interface::NoteProperties;
-    use dep::aztec::note::note_viewer_options::NoteViewerOptions;
     use dep::aztec::oracle::debug_log::{debug_log, debug_log_format};
-    use dep::aztec::prelude::{AztecAddress, EthAddress, PrivateSet, PublicImmutable, PublicMutable};
+    use dep::aztec::prelude::{AztecAddress, EthAddress, PrivateSet, PublicImmutable, PublicMutable, SharedMutable};
     use dep::aztec::prelude::NoteGetterOptions;
-    use dep::aztec::protocol_types::traits::ToField;
     use dep::aztec::utils::comparison::Comparator;
 
-    use crate::vote_note::VoteNote;
+
+    pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
     #[storage]
     struct Storage<Context> {
@@ -31,13 +31,14 @@ pub contract Recovery {
         contacts: PrivateSet<AddressNote, Context>,
         votes: PrivateSet<VoteNote, Context>,
         vote_ended: PublicMutable<bool, Context>,
-        //TODO: add a threshold value
+        threshold: SharedMutable<u32, CHANGE_AUTHORIZED_DELAY, Context>,
     }
 
     #[public]
     #[initializer]
-    fn constructor(owner: AztecAddress, portal: EthAddress) {
+    fn constructor(owner: AztecAddress, portal: EthAddress, threshold: u32) {
         storage.config.initialize(Config { owner, portal });
+        storage.threshold.schedule_value_change(threshold);
     }
 
     #[private]
@@ -59,7 +60,18 @@ pub contract Recovery {
 
     #[public]
     fn set_threshold(threshold: u32) {
-        //TODO: finish the function
+        let caller = context.msg_sender();
+
+        let config = storage.config.read();
+        assert(caller == config.owner, "Not owner");
+
+        storage.threshold.schedule_value_change(threshold);
+
+    }
+
+    #[public]
+    fn get_threshold() -> u32 {
+        storage.threshold.get_current_value()
     }
 
     #[private]
