@@ -5,7 +5,7 @@ pub mod test;
 
 use dep::aztec::macros::aztec;
 
-//BIG TODO! 
+//BIG TODO!
 //1. Think about which functions need to use NoteViewer https://docs.aztec.network/developers/reference/smart_contract_reference/storage/private_state#view_notes
 //2.
 
@@ -50,6 +50,16 @@ pub contract Recovery {
         let config = storage.config.read();
         assert(caller == config.owner, "Not owner");
 
+        //TODO: would be nice to replace with is_address_in_contacts?
+        let notes = storage.contacts.get_notes(NoteGetterOptions::new().select(
+            AddressNote::properties().address,
+            Comparator.EQ,
+            address,
+        ));
+        assert(notes.len() == 0, "Contact already exists");
+
+        let note = AddressNote::new(address, caller);
+
         //TODO: check if contact already exists
         storage.contacts.insert(note).emit(encode_and_encrypt_note(
             &mut context,
@@ -80,10 +90,13 @@ pub contract Recovery {
         let config = storage.config.read();
         assert(caller == config.owner, "Not owner");
 
-        //TODO:
-        //1. find notes
-        //2. pop found notes, but with the first todo, we should have only one note
+        let notes = storage.contacts.pop_notes(NoteGetterOptions::new().select(
+            AddressNote::properties().address,
+            Comparator.EQ,
+            address,
+        ));
 
+        assert(notes.len() > 0, "Contact not found");
     }
 
     #[private]

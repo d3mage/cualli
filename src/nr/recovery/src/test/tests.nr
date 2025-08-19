@@ -1,4 +1,4 @@
-use crate::{Recovery, address_note::AddressNote, test::utils};
+use crate::{address_note::AddressNote, Recovery, test::utils};
 
 #[test]
 unconstrained fn add_contact_success() {
@@ -22,6 +22,32 @@ unconstrained fn add_contact_user_failure() {
 
     env.impersonate(user);
     recovery_contract.add_contact(user).call(&mut env.private());
+}
+
+#[test(should_fail_with = "Contact already exists")]
+unconstrained fn add_contact_already_exists_failure() {
+    let (env, contract_address, owner, user) = utils::setup_contract(false);
+    let recovery_contract = Recovery::at(contract_address);
+
+    env.impersonate(owner);
+    recovery_contract.add_contact(user).call(&mut env.private());
+    recovery_contract.add_contact(user).call(&mut env.private());
+}
+
+#[test]
+unconstrained fn remove_contact_success() {
+    let (env, contract_address, owner, user) = utils::setup_contract(false);
+    let recovery_contract = Recovery::at(contract_address);
+
+    env.impersonate(owner);
+    recovery_contract.add_contact(user).call(&mut env.private());
+    let is_in_contacts = recovery_contract.is_address_in_contacts(user).call(&mut env.private());
+    assert(is_in_contacts, "User should be in contacts");
+
+    env.impersonate(owner);
+    recovery_contract.remove_contact(user).call(&mut env.private());
+    let is_in_contacts = recovery_contract.is_address_in_contacts(user).call(&mut env.private());
+    assert(!is_in_contacts, "User should not be in contacts");
 }
 
 #[test]
@@ -50,10 +76,10 @@ unconstrained fn set_threshold_success() {
 unconstrained fn get_note_by_address_success() {
     let (env, contract_address, owner, user) = utils::setup_contract(false);
     let recovery_contract = Recovery::at(contract_address);
-    
+
     let note = recovery_contract.get_note_by_address(user).call(&mut env.private());
     assert(note.is_none(), "Note should be None initially");
-    
+
     env.impersonate(owner);
     recovery_contract.add_contact(user).call(&mut env.private());
 
