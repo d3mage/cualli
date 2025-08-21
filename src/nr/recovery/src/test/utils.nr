@@ -7,23 +7,25 @@ use aztec::{
 
 pub unconstrained fn setup_contract(
     with_account_contracts: bool,
-) -> (&mut TestEnvironment, AztecAddress, AztecAddress, AztecAddress) {
+) -> (&mut TestEnvironment, AztecAddress, AztecAddress, AztecAddress, AztecAddress) {
     // Setup env, generate keys
     let mut env = TestEnvironment::new();
-    let (owner, user) = if with_account_contracts {
+    let (owner, user, user2) = if with_account_contracts {
         let owner = env.create_account_contract(1);
         let user = env.create_account_contract(2);
-        (owner, user)
+        let user2 = env.create_account_contract(3);
+        (owner, user, user2)
     } else {
         let owner = env.create_account(1);
         let user = env.create_account(2);
-        (owner, user)
+        let user2 = env.create_account(3);
+        (owner, user, user2)
     };
 
     let portal = EthAddress::from_field(1);
     let acontract = deploy_recovery_contract(&mut env, owner, portal);
 
-    (&mut env, acontract.to_address(), owner, user)
+    (&mut env, acontract.to_address(), owner, user, user2)
 }
 
 pub unconstrained fn deploy_recovery_contract(

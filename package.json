@@ -13,7 +13,8 @@
     "test:nr": "aztec test",
     "lint:prettier": "prettier '**/*.{js,ts}' --write",
     "build": "yarn compile && yarn codegen -f",
-    "prepare": "husky"
+    "prepare": "husky",
+    "exc": "yarn build && yarn test"
   },
   "lint-staged": {
     "*.ts": "prettier --write -u"

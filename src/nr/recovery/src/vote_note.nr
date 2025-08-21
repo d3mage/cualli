@@ -7,15 +7,15 @@ use dep::aztec::{
 #[note]
 #[derive(Eq, Serialize, Deserialize)]
 pub struct VoteNote {
-    candidate: AztecAddress,
-    voter: AztecAddress,
+    votes: Field,
+    finished: bool,
     owner: AztecAddress,
     randomness: Field,
 }
 
 impl VoteNote {
-    pub fn new(candidate: AztecAddress, voter: AztecAddress, owner: AztecAddress) -> Self {
+    pub fn new(votes: Field, finished: bool, owner: AztecAddress) -> Self {
         let randomness = unsafe { random() };
-        VoteNote { candidate, voter, owner, randomness }
+        VoteNote { votes, finished, owner, randomness }
     }
 }
