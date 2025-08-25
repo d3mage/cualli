@@ -135,6 +135,10 @@ pub contract Recovery {
         storage.votes.at(candidate).replace(VoteNote::new(votes, finished, owner)).emit(
             encode_and_encrypt_note(&mut context, owner, owner),
         );
+
+        let portal = storage.config.read().portal;
+        let content = candidate.to_field();
+        context.message_portal(portal, content);
     }
 
     #[private]
