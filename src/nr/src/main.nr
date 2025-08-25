@@ -10,6 +10,7 @@ use dep::aztec::macros::aztec;
 //2. Use contract_library_method macro to inline code
 //3. Merge notes together into single file
 //4. Add portals.
+//5. Reduce toml deps.
 
 #[aztec]
 pub contract Recovery {
@@ -135,10 +136,6 @@ pub contract Recovery {
         storage.votes.at(candidate).replace(VoteNote::new(votes, finished, owner)).emit(
             encode_and_encrypt_note(&mut context, owner, owner),
         );
-
-        let portal = storage.config.read().portal;
-        let content = candidate.to_field();
-        context.message_portal(portal, content);
     }
 
     #[private]
