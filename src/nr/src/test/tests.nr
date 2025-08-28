@@ -1,4 +1,4 @@
-use crate::{address_note::AddressNote, Recovery, test::utils};
+use crate::{Recovery, test::utils};
 
 use dep::aztec::prelude::EthAddress;
 

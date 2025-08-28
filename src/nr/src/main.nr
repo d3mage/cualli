@@ -1,28 +1,19 @@
 mod config;
-mod vote_note;
-mod address_note;
+mod notes;
 pub mod test;
 
 use dep::aztec::macros::aztec;
 
-//BIG TODO!
-//1. Think about which functions need to use NoteViewer https://docs.aztec.network/developers/reference/smart_contract_reference/storage/private_state#view_notes
-//2. Use contract_library_method macro to inline code
-//3. Merge notes together into single file
-//4. Add portals.
-//5. Reduce toml deps.
-
 #[aztec]
 pub contract Recovery {
     use crate::config::Config;
-    use crate::vote_note::VoteNote;
-
-    use crate::address_note::AddressNote;
+    use crate::notes::{AddressNote, VoteNote};
+    use dep::aztec::context::PrivateContext;
     use dep::aztec::keys::getters::get_public_keys;
     use dep::aztec::macros::{functions::{initializer, private, public}, storage::storage};
     use dep::aztec::messages::logs::note::encode_and_encrypt_note;
     use dep::aztec::note::note_interface::NoteProperties;
-    use dep::aztec::oracle::debug_log::{debug_log, debug_log_format};
+    use dep::aztec::note::retrieved_note::RetrievedNote;
     use dep::aztec::prelude::{
         AztecAddress, EthAddress, Map, NoteGetterOptions, PrivateMutable, PrivateSet,
         PublicImmutable, SharedMutable,
@@ -60,32 +51,21 @@ pub contract Recovery {
 
     #[private]
     fn add_contact(address: AztecAddress) {
-        let caller = context.msg_sender();
-
-        let config = storage.config.read();
-        assert(caller == config.owner, "Not owner");
-
-        assert(
-            !Recovery::at(context.this_address()).is_address_in_contacts(address).call(&mut context)
-                ,
-            "Contact already exists",
-        );
+        let (owner, caller) = is_owner_macro(&mut context);
+        assert(!is_address_in_contacts_macro(&mut context, address), "Contact already exists");
 
         let note = AddressNote::new(address, caller);
 
         storage.contacts.insert(note).emit(encode_and_encrypt_note(
             &mut context,
-            config.owner,
+            owner,
             address,
         ));
     }
 
     #[private]
     fn remove_contact(address: AztecAddress) {
-        let caller = context.msg_sender();
-
-        let config = storage.config.read();
-        assert(caller == config.owner, "Not owner");
+        let (owner, caller) = is_owner_macro(&mut context);
 
         let notes = storage.contacts.pop_notes(NoteGetterOptions::new().select(
             AddressNote::properties().address,
@@ -99,10 +79,7 @@ pub contract Recovery {
     #[private]
     fn start_vote(candidate: EthAddress) {
         let caller = context.msg_sender();
-        assert(
-            Recovery::at(context.this_address()).is_address_in_contacts(caller).call(&mut context),
-            "Caller is not a contact",
-        );
+        assert(is_address_in_contacts_macro(&mut context, caller), "Caller is not a contact");
 
         let owner = storage.config.read().owner;
         storage.votes.at(candidate).initialize(VoteNote::new(0, false, owner)).emit(
@@ -113,10 +90,7 @@ pub contract Recovery {
     #[private]
     fn vote(candidate: EthAddress) {
         let caller = context.msg_sender();
-        assert(
-            Recovery::at(context.this_address()).is_address_in_contacts(caller).call(&mut context),
-            "Caller is not a contact",
-        );
+        assert(is_address_in_contacts_macro(&mut context, caller), "Caller is not a contact");
 
         let msg_sender_npk_m_hash = get_public_keys(caller).npk_m.hash();
         let secret = context.request_nsk_app(msg_sender_npk_m_hash);
@@ -140,23 +114,12 @@ pub contract Recovery {
 
     #[private]
     fn is_address_in_contacts(address: AztecAddress) -> bool {
-        let notes = storage.contacts.get_notes(NoteGetterOptions::new().select(
-            AddressNote::properties().address,
-            Comparator.EQ,
-            address,
-        ));
-
-        notes.len() > 0
+        is_address_in_contacts_macro(&mut context, address)
     }
 
     #[private]
     fn get_note_by_address(address: AztecAddress) -> Option<AddressNote> {
-        let notes = storage.contacts.get_notes(NoteGetterOptions::new().select(
-            AddressNote::properties().address,
-            Comparator.EQ,
-            address,
-        ));
-
+        let notes = collect_notes_by_address_macro(&mut context, address);
         if notes.len() > 0 {
             Option::some(notes.get(0).note)
         } else {
@@ -180,6 +143,38 @@ pub contract Recovery {
     #[public]
     fn get_threshold() -> u32 {
         storage.threshold.get_current_value()
+    }
+
+    #[contract_library_method]
+    fn is_owner_macro(context: &mut PrivateContext) -> (AztecAddress, AztecAddress) {
+        let storage = Storage::init(context);
+        let config = storage.config.read();
+        let owner = config.owner;
+        let caller = context.msg_sender();
+
+        assert(caller == owner, "Not owner");
+        (owner, caller)
+    }
+
+    #[contract_library_method]
+    fn is_address_in_contacts_macro(context: &mut PrivateContext, address: AztecAddress) -> bool {
+        let notes = collect_notes_by_address_macro(context, address);
+        notes.len() > 0
+    }
+
+    #[contract_library_method]
+    fn collect_notes_by_address_macro(
+        context: &mut PrivateContext,
+        address: AztecAddress,
+    ) -> BoundedVec<RetrievedNote<AddressNote>, 16> {
+        let storage = Storage::init(context);
+        let notes = storage.contacts.get_notes(NoteGetterOptions::new().select(
+            AddressNote::properties().address,
+            Comparator.EQ,
+            address,
+        ));
+
+        notes
     }
 
 }
