@@ -34,7 +34,8 @@ pub unconstrained fn deploy_recovery_contract(
     wormhole_address: AztecAddress,
 ) -> ContractInstance {
     let threshold = 3;
-    let initializer_call_interface = Recovery::interface().constructor(owner, wormhole_address, threshold);
+    let initializer_call_interface =
+        Recovery::interface().constructor(owner, wormhole_address, threshold);
     let contract_instance = env.deploy("./@recovery", "Recovery").with_public_void_initializer(
         owner,
         initializer_call_interface,

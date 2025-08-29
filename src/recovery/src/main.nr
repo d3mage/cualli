@@ -58,11 +58,7 @@ pub contract Recovery {
 
         let note = AddressNote::new(address, caller);
 
-        storage.contacts.insert(note).emit(encode_and_encrypt_note(
-            &mut context,
-            owner,
-            address,
-        ));
+        storage.contacts.insert(note).emit(encode_and_encrypt_note(&mut context, owner, address));
     }
 
     #[private]
@@ -163,8 +159,7 @@ pub contract Recovery {
     }
 
     #[contract_library_method]
-    fn send_wormhole_message(context: &mut PrivateContext, address: EthAddress) {
-    }
+    fn send_wormhole_message(context: &mut PrivateContext, address: EthAddress) {}
 
     #[contract_library_method]
     fn is_address_in_contacts_macro(context: &mut PrivateContext, address: AztecAddress) -> bool {

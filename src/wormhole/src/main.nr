@@ -38,7 +38,6 @@ pub contract DummyHole {
         storage.current_guardian_set_index.at(0).write(18_446_744_073_709_551_615);
     }
 
-
     #[private]
     fn publish_message_in_private(
         nonce: u64,
@@ -61,9 +60,9 @@ pub contract DummyHole {
             .transfer_in_private(from, receiver_address, message_fee, token_nonce)
             .call(&mut context);
 
-        DummyHole::at(context.this_address())._publish_message(nonce, payloads, consistency).enqueue(
-            &mut context,
-        );
+        DummyHole::at(context.this_address())
+            ._publish_message(nonce, payloads, consistency)
+            .enqueue(&mut context);
     }
 
     #[public]
