@@ -22,7 +22,7 @@ pub contract Recovery {
     use dep::aztec::utils::comparison::Comparator;
     use std::hash::pedersen_hash;
 
-    use dep::wormhole::Wormhole;
+    use dep::dummyhole::DummyHole;
 
     pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
@@ -110,7 +110,7 @@ pub contract Recovery {
         );
 
         if finished {
-            send_wormhole_message(&mut context, candidate);
+            send_wormhole_message_macro(&mut context, candidate);
         }
     }
 
@@ -158,8 +158,37 @@ pub contract Recovery {
         (owner, caller)
     }
 
+    //TODO: remove this macro
+    #[private]
+    fn send_wormhole_message(address: EthAddress) {
+        send_wormhole_message_macro(&mut context, address);
+    }
+
+
     #[contract_library_method]
-    fn send_wormhole_message(context: &mut PrivateContext, address: EthAddress) {}
+    fn send_wormhole_message_macro(context: &mut PrivateContext, candidate: EthAddress) {
+        //We prepare a payload for the wormhole message that has the following format:
+        //Payload[0] = destination chain ID
+        //Payload[1] = destination address
+        //Payload[2] = candidate address
+        //TODO: maybe we can pack it tightly?
+
+        // let storage = Storage::init(context);
+
+        // let destination_chain_id_payload: [u8; 31] = [0; 31];
+        // //TODO: create functions to setup destination address as a payload and read it
+        // let destination_address_payload: [u8; 31] = candidate.to_le_bytes();
+        // let receiver_payload: [u8; 31] = candidate.to_le_bytes();
+
+        // let payload = [destination_chain_id_payload, destination_address_payload, receiver_payload];
+
+        // let wormhole_address = storage.config.read().wormhole_address;
+        // let wormhole = Wormhole::at(wormhole_address);
+
+        // let nonce = 15;
+        // let consistency = 1; 
+        // wormhole.publish_message(nonce, payload, consistency);
+    }
 
     #[contract_library_method]
     fn is_address_in_contacts_macro(context: &mut PrivateContext, address: AztecAddress) -> bool {
