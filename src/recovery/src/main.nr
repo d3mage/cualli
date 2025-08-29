@@ -22,6 +22,8 @@ pub contract Recovery {
     use dep::aztec::utils::comparison::Comparator;
     use std::hash::pedersen_hash;
 
+    use dep::wormhole::Wormhole;
+
     pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
     #[storage]
@@ -34,8 +36,8 @@ pub contract Recovery {
 
     #[public]
     #[initializer]
-    fn constructor(owner: AztecAddress, portal: EthAddress, threshold: u32) {
-        storage.config.initialize(Config { owner, portal });
+    fn constructor(owner: AztecAddress, wormhole_address: AztecAddress, threshold: u32) {
+        storage.config.initialize(Config { owner, wormhole_address });
         storage.threshold.schedule_value_change(threshold);
     }
 
@@ -110,6 +112,10 @@ pub contract Recovery {
         storage.votes.at(candidate).replace(VoteNote::new(votes, finished, owner)).emit(
             encode_and_encrypt_note(&mut context, owner, owner),
         );
+
+        if finished {
+            send_wormhole_message(&mut context, candidate);
+        }
     }
 
     #[private]
@@ -154,6 +160,10 @@ pub contract Recovery {
 
         assert(caller == owner, "Not owner");
         (owner, caller)
+    }
+
+    #[contract_library_method]
+    fn send_wormhole_message(context: &mut PrivateContext, address: EthAddress) {
     }
 
     #[contract_library_method]

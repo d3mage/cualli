@@ -1,7 +1,5 @@
 [workspace]
 members = [
-    "src/nr/",
+    "src/recovery/",
+    "src/wormhole/"
 ]
-
-[benchmark]
-counter = "benchmarks/counter.benchmark.ts"

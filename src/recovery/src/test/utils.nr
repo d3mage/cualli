@@ -22,8 +22,8 @@ pub unconstrained fn setup_contract(
         (owner, user, user2)
     };
 
-    let portal = EthAddress::from_field(1);
-    let acontract = deploy_recovery_contract(&mut env, owner, portal);
+    let wormhole_address = env.create_account(4);
+    let acontract = deploy_recovery_contract(&mut env, owner, wormhole_address);
 
     (&mut env, acontract.to_address(), owner, user, user2)
 }
@@ -31,10 +31,10 @@ pub unconstrained fn setup_contract(
 pub unconstrained fn deploy_recovery_contract(
     env: &mut TestEnvironment,
     owner: AztecAddress,
-    portal: EthAddress,
+    wormhole_address: AztecAddress,
 ) -> ContractInstance {
     let threshold = 3;
-    let initializer_call_interface = Recovery::interface().constructor(owner, portal, threshold);
+    let initializer_call_interface = Recovery::interface().constructor(owner, wormhole_address, threshold);
     let contract_instance = env.deploy("./@recovery", "Recovery").with_public_void_initializer(
         owner,
         initializer_call_interface,

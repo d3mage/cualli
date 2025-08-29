@@ -7,5 +7,5 @@ use std::meta::derive;
 #[derive(Deserialize, Eq, Packable, Serialize)]
 pub struct Config {
     pub owner: AztecAddress,
-    pub portal: EthAddress,
+    pub wormhole_address: AztecAddress,
 }
