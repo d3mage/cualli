@@ -10,9 +10,11 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["contracts/**/*", "scripts/**/*.ts", "jest.setup.ts", "jest.teardown.ts"],
+  "include": ["src/ts/**/*.ts", "jest.setup.ts", "jest.teardown.ts"],
   "exclude": ["node_modules"]
 }
   
