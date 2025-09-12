@@ -1,3 +1,5 @@
+// src/deploy.mjs
+import { getInitialTestAccountsWallets } from "@aztec/accounts/testing";
 import {
   Contract,
   createPXEClient,
@@ -6,7 +8,6 @@ import {
 } from "@aztec/aztec.js";
 import RecoveryContractJson from "../../target/recovery-Recovery.json" with { type: "json" };
 import { writeFileSync } from "fs";
-import { loadWalletFromCompleteAddress } from "./create_address.js";
 
 const RecoveryContractArtifact = loadContractArtifact(RecoveryContractJson);
 
@@ -16,11 +17,11 @@ async function main() {
   const pxe = createPXEClient(PXE_URL);
   await waitForPXE(pxe);
 
-  const ownerWallet = await loadWalletFromCompleteAddress("WALLET_A", pxe);
-  const ownerAddress = ownerWallet.getAddress().toString();
+  const [ownerWallet] = await getInitialTestAccountsWallets(pxe);
+  const ownerAddress = ownerWallet.getAddress();
 
   let wormholeAddress =
-    "0x0848d2af89dfd7c0e171238f9216399e61e908cd31b0222a920f1bf621a16ed6";
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   const recovery = await Contract.deploy(
     ownerWallet,
