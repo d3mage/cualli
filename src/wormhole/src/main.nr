@@ -14,11 +14,7 @@ pub contract DummyHole {
     }
 
     #[private]
-    fn publish_message_in_private(
-        nonce: u64,
-        payloads: [[u8; 31]; 3],
-        consistency: u8
-    ) {
+    fn publish_message_in_private(nonce: u64, payloads: [[u8; 31]; 3], consistency: u8) {
         DummyHole::at(context.this_address())
             ._publish_message(nonce, payloads, consistency)
             .enqueue(&mut context);

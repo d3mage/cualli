@@ -164,7 +164,6 @@ pub contract Recovery {
         send_wormhole_message_macro(&mut context, address);
     }
 
-
     #[contract_library_method]
     fn send_wormhole_message_macro(context: &mut PrivateContext, candidate: EthAddress) {
         //We prepare a payload for the wormhole message that has the following format:
@@ -186,7 +185,7 @@ pub contract Recovery {
         // let wormhole = Wormhole::at(wormhole_address);
 
         // let nonce = 15;
-        // let consistency = 1; 
+        // let consistency = 1;
         // wormhole.publish_message(nonce, payload, consistency);
     }
 
