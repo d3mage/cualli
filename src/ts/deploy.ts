@@ -1,22 +1,15 @@
-import {
-  Contract,
-  createPXEClient,
-  loadContractArtifact,
-  waitForPXE,
-} from "@aztec/aztec.js";
+import { Contract, loadContractArtifact } from "@aztec/aztec.js";
 import RecoveryContractJson from "../../target/recovery-Recovery.json" with { type: "json" };
 import { writeFileSync } from "fs";
-import { loadWalletFromCompleteAddress } from "./create_address.js";
+import { loadSchnorrAccount } from "./deploy_address.ts";
+import { setupPXE } from "./setup_pxe.ts";
 
 const RecoveryContractArtifact = loadContractArtifact(RecoveryContractJson);
 
-const { PXE_URL = "http://localhost:8080" } = process.env;
-
 async function main() {
-  const pxe = createPXEClient(PXE_URL);
-  await waitForPXE(pxe);
+  const pxe = await setupPXE();
 
-  const ownerWallet = await loadWalletFromCompleteAddress("WALLET_A", pxe);
+  const ownerWallet = await loadSchnorrAccount("WALLET_A", pxe);
   const ownerAddress = ownerWallet.getAddress().toString();
 
   let wormholeAddress =

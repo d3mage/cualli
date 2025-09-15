@@ -9,7 +9,6 @@ export const setupPXE = async () => {
   const l1Contracts = await node.getL1ContractAddresses();
   const config = getPXEServiceConfig();
   const fullConfig = { ...config, l1Contracts };
-  fullConfig.proverEnabled = false;
 
   const store = await createStore("pxe", {
     dataDirectory: "store",
