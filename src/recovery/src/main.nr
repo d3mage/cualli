@@ -23,6 +23,7 @@ pub contract Recovery {
     use std::hash::pedersen_hash;
 
     use dep::dummyhole::DummyHole;
+    // use dep::wormhole::Wormhole;
 
     pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
@@ -109,9 +110,9 @@ pub contract Recovery {
             encode_and_encrypt_note(&mut context, owner, owner),
         );
 
-        if finished {
-            send_wormhole_message_macro(&mut context, candidate);
-        }
+        // if finished {
+        //     send_wormhole_message_macro(&mut context, candidate);
+        // }
     }
 
     #[private]
@@ -158,19 +159,60 @@ pub contract Recovery {
         (owner, caller)
     }
 
-    //TODO: remove this macro
-    #[private]
-    fn send_wormhole_message(address: EthAddress) {
-        send_wormhole_message_macro(&mut context, address);
-    }
+    // //TODO: remove this macro
+    // #[private]
+    // fn send_wormhole_message(address: EthAddress, msg: [[u8;31];7], wormhole_address: AztecAddress,
+    //     token_address: AztecAddress, // address of the token to be donated
+    //     amount: u128, // amount of tokens to be donated on chosen chainID
+    //     nonce: Field) {
+    //     send_wormhole_message_macro(&mut context, address);
+    // }
 
-    #[contract_library_method]
-    fn send_wormhole_message_macro(context: &mut PrivateContext, candidate: EthAddress) {
+    #[public]
+    fn send_wormhole_message(
+        candidate: EthAddress,
+        msg: [[u8;31];7],             // [destination address, destination chain id, msg1, msg2, msg3, msg4, msg5]
+        wormhole_address: AztecAddress,
+        token_nonce: Field
+    ) {
+        // Convert candidate EthAddress into a 31-byte payload
+        let candidate_field: Field = candidate.to_field();
+        let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
+
+        // Build the 8;31 Wormhole payload: 
+        // destination addr, chain id, amount, candidate, and 4 spare slots for extension
+        let wormhole_payload: [[u8;31];8] = [
+            msg[0],         // destination address
+            msg[1],         // chain id
+            candidate_bytes,   // candidate
+            msg[2], // random payload
+            msg[3], // random payload
+            msg[4], // random payload
+            msg[5], // random payload
+            msg[6], // random payload
+        ];
+
+        let nonce = 1;
+        let message_fee: u128 = 1;
+        let consistency: u8 = 2;
+        let from = context.msg_sender();
+
+        let _ = DummyHole::at(wormhole_address).publish_message_in_public(
+            nonce,
+            wormhole_payload,
+            message_fee,
+            consistency,
+            from,
+            token_nonce,
+        ).call(&mut context);
+}
+
+    // #[contract_library_method]
+    // fn send_wormhole_message_macro(context: &mut PrivateContext, candidate: EthAddress) {
         //We prepare a payload for the wormhole message that has the following format:
         //Payload[0] = destination chain ID
         //Payload[1] = destination address
         //Payload[2] = candidate address
-        //TODO: maybe we can pack it tightly?
 
         // let storage = Storage::init(context);
 
@@ -186,8 +228,8 @@ pub contract Recovery {
 
         // let nonce = 15;
         // let consistency = 1;
-        // wormhole.publish_message(nonce, payload, consistency);
-    }
+        // wormhole.publish_message_in_private(nonce, payload, consistency);
+    // }
 
     #[contract_library_method]
     fn is_address_in_contacts_macro(context: &mut PrivateContext, address: AztecAddress) -> bool {

@@ -19,9 +19,7 @@ export async function deploySchnorrAccount(
   // Setup sponsored FPC
   logger.info("💰 Setting up sponsored fee payment for account deployment...");
   const sponsoredFPC = await getSponsoredFPCInstance();
-  logger.info(`💰 Sponsored FPC instance obtained at: ${sponsoredFPC.address}`);
 
-  logger.info("📝 Registering sponsored FPC contract with PXE...");
   await pxe.registerContract({
     instance: sponsoredFPC,
     artifact: SponsoredFPCContract.artifact,

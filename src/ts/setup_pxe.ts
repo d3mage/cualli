@@ -3,7 +3,7 @@ import { createStore } from "@aztec/kv-store/lmdb";
 import { createAztecNodeClient, waitForPXE } from "@aztec/aztec.js";
 
 export const setupPXE = async () => {
-  const NODE_URL = "https://aztec-alpha-testnet-fullnode.zkv.xyz";
+  const NODE_URL = "https://aztec-testnet-fullnode.zkv.xyz";
   console.log(`Setting up PXE on ${NODE_URL}`);
   const node = createAztecNodeClient(NODE_URL);
   const l1Contracts = await node.getL1ContractAddresses();
