@@ -1,5 +1,5 @@
-use dep::aztec::protocol_types::{
-    address::{AztecAddress, EthAddress},
+use aztec::protocol_types::{
+    address::{AztecAddress},
     traits::{Deserialize, Packable, Serialize},
 };
 use std::meta::derive;
