@@ -1,6 +1,6 @@
 use crate::{Recovery, test::utils};
 
-use aztec::protocol_types::{address::{EthAddress}, traits::FromField};
+use aztec::protocol_types::{address::EthAddress, traits::FromField};
 
 #[test]
 unconstrained fn add_contact_success() {

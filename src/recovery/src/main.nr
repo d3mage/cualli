@@ -26,7 +26,7 @@ pub contract Recovery {
 
     use std::hash::pedersen_hash;
 
-    // use dummyhole::DummyHole;
+    use wormhole::Wormhole;
 
     pub(crate) global CHANGE_AUTHORIZED_DELAY: u64 = 180;
 
@@ -160,36 +160,36 @@ pub contract Recovery {
         (owner, caller)
     }
 
-    // #[public]
-    // fn send_wormhole_message(
-    //     candidate: EthAddress,
-    //     msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
-    //     wormhole_address: AztecAddress,
-    //     token_nonce: Field,
-    // ) {
-    //     let candidate_field: Field = candidate.to_field();
-    //     let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
+    #[public]
+    fn send_wormhole_message(
+        candidate: EthAddress,
+        msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
+        wormhole_address: AztecAddress,
+        token_nonce: Field,
+    ) {
+        let candidate_field: Field = candidate.to_field();
+        let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
 
-    //     let wormhole_payload: [[u8; 31]; 8] = [
-    //         msg[0],
-    //         msg[1],
-    //         candidate_bytes,
-    //         msg[2],
-    //         msg[3],
-    //         msg[4],
-    //         msg[5],
-    //         msg[6],
-    //     ];
+        let wormhole_payload: [[u8; 31]; 8] = [
+            msg[0],
+            msg[1],
+            candidate_bytes,
+            msg[2],
+            msg[3],
+            msg[4],
+            msg[5],
+            msg[6],
+        ];
 
-    //     let nonce = 1;
-    //     let message_fee: u128 = 1;
-    //     let consistency: u8 = 2;
-    //     let from = context.msg_sender();
+        let nonce = 1;
+        let message_fee: u128 = 1;
+        let consistency: u8 = 2;
+        let from = context.msg_sender();
 
-    //     let _ = DummyHole::at(wormhole_address)
-    //         .publish_message_in_public(nonce, wormhole_payload, message_fee, consistency, from, token_nonce)
-    //         .call(&mut context);
-    // }
+        let _ = Wormhole::at(wormhole_address)
+            .publish_message_in_public(nonce, wormhole_payload, message_fee, consistency, from, token_nonce)
+            .call(&mut context);
+    }
 
     #[contract_library_method]
     fn is_address_in_contacts_macro(context: &mut PrivateContext, address: AztecAddress) -> bool {

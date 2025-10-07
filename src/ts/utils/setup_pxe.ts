@@ -11,7 +11,7 @@ export const setupPXE = async () => {
   const fullConfig = { ...config, l1Contracts };
 
   const store = await createStore("pxe", {
-    dataDirectory: "store",
+    dataDirectory: "../config/",
     dataStoreMapSizeKB: 1e6,
   });
 
