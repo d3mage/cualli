@@ -1,5 +1,5 @@
 [workspace]
 members = [
     "src/recovery/",
-    "src/wormhole/"
+    "src/dummyhole/"
 ]

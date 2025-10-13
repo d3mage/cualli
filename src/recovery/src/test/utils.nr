@@ -8,12 +8,21 @@ pub unconstrained fn setup_contract() -> (&mut TestEnvironment, AztecAddress, Az
     let owner = env.create_light_account();
     let user = env.create_light_account();
     let user2 = env.create_light_account();
-    let wormhole_address = AztecAddress::from_field(4);
 
+
+    let wormhole_address = deploy_wormhole_contract(&mut env);
     let contract_address = deploy_recovery_contract(&mut env, owner, wormhole_address);
 
     (&mut env, contract_address, owner, user, user2)
 }
+
+pub unconstrained fn deploy_wormhole_contract(
+    env: &mut TestEnvironment,
+) -> AztecAddress {
+    let address = env.deploy("@dummyhole/DummyHole").without_initializer();
+    address
+}
+
 
 pub unconstrained fn deploy_recovery_contract(
     env: &mut TestEnvironment,

@@ -163,31 +163,32 @@ pub contract Recovery {
     #[public]
     fn send_wormhole_message(
         candidate: EthAddress,
-        msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
-        wormhole_address: AztecAddress,
-        token_nonce: Field,
+        msg: [[u8; 31]; 7] // [destination addr, destination chain id, msg1..msg5]
     ) {
+        let config = storage.config.read();
+        let wormhole_address = config.wormhole_address;
+
         let candidate_field: Field = candidate.to_field();
         let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
 
-        let wormhole_payload: [[u8; 31]; 8] = [
-            msg[0],
-            msg[1],
-            candidate_bytes,
-            msg[2],
-            msg[3],
-            msg[4],
-            msg[5],
-            msg[6],
-        ];
+        let wormhole_payload: [[u8; 31]; 8] =
+            [msg[0], msg[1], candidate_bytes, msg[2], msg[3], msg[4], msg[5], msg[6]];
 
         let nonce = 1;
-        let message_fee: u128 = 1;
+        let message_fee: u128 = 0;
         let consistency: u8 = 2;
         let from = context.msg_sender();
+        let token_nonce = 0;
 
         let _ = Wormhole::at(wormhole_address)
-            .publish_message_in_public(nonce, wormhole_payload, message_fee, consistency, from, token_nonce)
+            .publish_message_in_public(
+                nonce,
+                wormhole_payload,
+                message_fee,
+                consistency,
+                from,
+                token_nonce,
+            )
             .call(&mut context);
     }
 

@@ -16,8 +16,9 @@ import * as path from "path";
 export async function deploySchnorrAccount(
   pxe: PXE,
   label: string,
+  save: boolean = true,
 ): Promise<AccountManager> {
-  const logger: Logger = createLogger("aztec:aztec-starter");
+  const logger: Logger = createLogger("schnorr-account");
 
   logger.info("👤 Starting Schnorr account deployment...");
   const sponsoredFPC = await getSponsoredFPCInstance();
@@ -89,15 +90,17 @@ export async function deploySchnorrAccount(
 
   logger.info("🎉 Schnorr account deployment completed successfully!");
 
-  const accountData = {
-    address: deployedAddress.toString(),
-    secret: secretKey.toString(),
-    signingKey: signingKey.toString(),
-    salt: salt.toString(),
-  };
+  if (save) {
+    const accountData = {
+      address: deployedAddress.toString(),
+      secret: secretKey.toString(),
+      signingKey: signingKey.toString(),
+      salt: salt.toString(),
+    };
 
-  const accountsFile = path.join(process.cwd(), `../config/${label}.json`);
-  fs.writeFileSync(accountsFile, JSON.stringify(accountData, null, 2));
+    const accountsFile = path.join(process.cwd(), `../config/${label}.json`);
+    fs.writeFileSync(accountsFile, JSON.stringify(accountData, null, 2));
+  }
 
   return schnorrAccount;
 }
