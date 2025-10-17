@@ -166,7 +166,6 @@ unconstrained fn vote_already_voted_failure() {
     env.call_private(user, recovery_contract.vote(candidate_address));
 }
 
-
 #[test]
 unconstrained fn send_wormhole_message_success() {
     let (env, contract_address, owner, user, _) = utils::setup_contract();
@@ -201,25 +200,15 @@ unconstrained fn send_wormhole_message_success() {
     dest_addr[17] = 0xE3;
     dest_addr[18] = 0xd6;
     dest_addr[19] = 0x86;
-    
+
     let mut chain_id: [u8; 31] = [0; 31];
     chain_id[0] = 0x14; // Chain ID 10004 in little-endian (0x2714)
     chain_id[1] = 0x27;
-    
-    let zero_bytes: [u8; 31] = [0; 31];
-    
-    let msg: [[u8; 31]; 7] = [
-        dest_addr,
-        chain_id,
-        zero_bytes,
-        zero_bytes,
-        zero_bytes,
-        zero_bytes,
-        zero_bytes,
-    ];
 
-    env.call_public(owner, recovery_contract.send_wormhole_message(
-        candidate_address,
-        msg,
-    ));
+    let zero_bytes: [u8; 31] = [0; 31];
+
+    let msg: [[u8; 31]; 7] =
+        [dest_addr, chain_id, zero_bytes, zero_bytes, zero_bytes, zero_bytes, zero_bytes];
+
+    env.call_public(owner, recovery_contract.send_wormhole_message(candidate_address, msg));
 }

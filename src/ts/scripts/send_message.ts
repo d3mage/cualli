@@ -25,8 +25,8 @@ import {
 
 const {
   ADDRESSES_FILE = path.join(process.cwd(), "../config/addresses.json"),
-  DEST_ADDRESS = "0x009cbB8f91d392856Cb880d67c806Aa731E3d686",
-  DEST_CHAIN_ID = "10004",
+  DEST_ADDRESS = "0x510c0d85Fd5a54AA6bc1800Fa705b6607Eb3c49a",
+  DEST_CHAIN_ID = "421614",
   CANDIDATE_ETH = "0x1234567890abcdef1234567890abcdef12345678",
 } = process.env as Record<string, string>;
 
@@ -83,15 +83,15 @@ async function main() {
     });
   return;
 
-  const tx = await recovery.methods
-    .send_wormhole_message(CANDIDATE_ETH, msgArrays)
-    .send({
-      from: ownerWallet.getAddress(),
-      fee: { paymentMethod: sponsoredPaymentMethod },
-    })
-    .wait({ timeout: 180 });
+  // const tx = await recovery.methods
+  //   .send_wormhole_message(CANDIDATE_ETH, msgArrays)
+  //   .send({
+  //     from: ownerWallet.getAddress(),
+  //     fee: { paymentMethod: sponsoredPaymentMethod },
+  //   })
+  //   .wait({ timeout: 180 });
 
-  logger.info(`✅ Sent. txHash: ${tx.txHash}, block: ${tx.blockNumber}`);
+  // logger.info(`✅ Sent. txHash: ${tx.txHash}, block: ${tx.blockNumber}`);
 }
 
 main().catch((err) => {

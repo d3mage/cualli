@@ -1,3 +1,9 @@
 [submodule "src/sol/lib/forge-std"]
 	path = src/sol/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "src/sol/lib/wormhole"]
+	path = src/sol/lib/wormhole
+	url = https://github.com/wormhole-foundation/wormhole
+[submodule "src/sol/lib/openzeppelin-contracts"]
+	path = src/sol/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts

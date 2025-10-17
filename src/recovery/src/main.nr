@@ -163,7 +163,7 @@ pub contract Recovery {
     #[public]
     fn send_wormhole_message(
         candidate: EthAddress,
-        msg: [[u8; 31]; 7] // [destination addr, destination chain id, msg1..msg5]
+        msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
     ) {
         let config = storage.config.read();
         let wormhole_address = config.wormhole_address;
