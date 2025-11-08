@@ -10,9 +10,10 @@ pub contract Recovery {
     use crate::notes::{AddressNote, VoteNote};
 
     use aztec::context::PrivateContext;
+    use aztec::macros::functions::{external, initializer};
+    use aztec::macros::storage::storage;
     use aztec::keys::getters::get_public_keys;
-    use aztec::macros::{functions::{initializer, private, public}, storage::storage};
-    use aztec::messages::logs::note::encode_and_encrypt_note;
+    use aztec::messages::message_delivery::MessageDelivery;
     use aztec::note::{
         note_getter_options::NoteGetterOptions, note_interface::NoteProperties,
         retrieved_note::RetrievedNote,
@@ -38,16 +39,16 @@ pub contract Recovery {
         votes: Map<EthAddress, PrivateMutable<VoteNote, Context>, Context>,
     }
 
-    #[public]
     #[initializer]
+    #[external("public")]
     fn constructor(owner: AztecAddress, wormhole_address: AztecAddress, threshold: u32) {
         storage.config.initialize(Config { owner, wormhole_address });
         storage.threshold.schedule_value_change(threshold);
     }
 
-    #[public]
+    #[external("public")]
     fn set_threshold(threshold: u32) {
-        let caller = context.msg_sender();
+        let caller = context.msg_sender().unwrap();
 
         let config = storage.config.read();
         assert(caller == config.owner, "Not owner");
@@ -55,16 +56,16 @@ pub contract Recovery {
         storage.threshold.schedule_value_change(threshold);
     }
 
-    #[private]
+    #[external("private")]
     fn add_contact(address: AztecAddress) {
         let (owner, caller) = is_owner_macro(&mut context);
         assert(!is_address_in_contacts_macro(&mut context, address), "Contact already exists");
 
         let note = AddressNote::new(address, caller);
-        storage.contacts.insert(note).emit(encode_and_encrypt_note(&mut context, owner));
+        storage.contacts.insert(note).emit(owner, MessageDelivery.CONSTRAINED_ONCHAIN);
     }
 
-    #[private]
+    #[external("private")]
     fn remove_contact(address: AztecAddress) {
         let (_, _caller) = is_owner_macro(&mut context);
 
@@ -77,20 +78,20 @@ pub contract Recovery {
         assert(notes.len() > 0, "Contact not found");
     }
 
-    #[private]
+    #[external("private")]
     fn start_vote(candidate: EthAddress) {
-        let caller = context.msg_sender();
+        let caller = context.msg_sender().unwrap();
         assert(is_address_in_contacts_macro(&mut context, caller), "Caller is not a contact");
 
         let owner = storage.config.read().owner;
         storage.votes.at(candidate).initialize(VoteNote::new(0, false, owner)).emit(
-            encode_and_encrypt_note(&mut context, owner),
+            owner, MessageDelivery.CONSTRAINED_ONCHAIN
         );
     }
 
-    #[private]
+    #[external("private")]
     fn vote(candidate: EthAddress) {
-        let caller = context.msg_sender();
+        let caller = context.msg_sender().unwrap();
         assert(is_address_in_contacts_macro(&mut context, caller), "Caller is not a contact");
 
         let msg_sender_npk_m_hash = get_public_keys(caller).npk_m.hash();
@@ -98,31 +99,29 @@ pub contract Recovery {
         let nullifier = pedersen_hash([caller.to_field(), candidate.to_field(), secret]);
         context.push_nullifier(nullifier);
 
-        let vote_note = storage.votes.at(candidate).get_note().note;
-        let votes = vote_note.get_votes() + 1;
-
         let threshold = storage.threshold.get_current_value();
-        let mut finished = false;
-        if votes as u32 >= threshold {
-            finished = true;
-        }
-
         let owner = storage.config.read().owner;
-        let note = VoteNote::new(votes, finished, owner);
-
-        storage.votes.at(candidate).replace(note).emit(encode_and_encrypt_note(&mut context, owner));
+        
+        storage.votes.at(candidate).replace(|vote_note| {
+            let votes = vote_note.get_votes() + 1;
+            let mut finished = false;
+            if votes as u32 >= threshold {
+                finished = true;
+            }
+            VoteNote::new(votes, finished, owner)
+        }).emit(owner, MessageDelivery.CONSTRAINED_ONCHAIN);
 
         // if finished {
         //     send_wormhole_message_macro(&mut context, candidate);
         // }
     }
 
-    #[private]
+    #[external("private")]
     fn is_address_in_contacts(address: AztecAddress) -> bool {
         is_address_in_contacts_macro(&mut context, address)
     }
 
-    #[private]
+    #[external("private")]
     fn get_note_by_address(address: AztecAddress) -> Option<AddressNote> {
         let notes = collect_notes_by_address_macro(&mut context, address);
         if notes.len() > 0 {
@@ -132,19 +131,20 @@ pub contract Recovery {
         }
     }
 
-    #[private]
+    #[external("private")]
     fn get_votes_by_candidate(candidate: EthAddress) -> u32 {
-        let vote_note = storage.votes.at(candidate).get_note().note;
+        let emission = storage.votes.at(candidate).get_note();
+        let vote_note = emission.content.note;
         vote_note.get_votes() as u32
     }
 
-    #[private]
+    #[external("private")]
     fn contacts_length() -> u32 {
         let notes = storage.contacts.get_notes(NoteGetterOptions::new());
         notes.len() as u32
     }
 
-    #[public]
+    #[external("public")]
     fn get_threshold() -> u32 {
         storage.threshold.get_current_value()
     }
@@ -154,13 +154,13 @@ pub contract Recovery {
         let storage = Storage::init(context);
         let config = storage.config.read();
         let owner = config.owner;
-        let caller = context.msg_sender();
+        let caller = context.msg_sender().unwrap();
 
         assert(caller == owner, "Not owner");
         (owner, caller)
     }
 
-    #[public]
+    #[external("public")]
     fn send_wormhole_message(
         candidate: EthAddress,
         msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
@@ -177,7 +177,7 @@ pub contract Recovery {
         let nonce = 1;
         let message_fee: u128 = 0;
         let consistency: u8 = 2;
-        let from = context.msg_sender();
+        let from = context.msg_sender().unwrap();
         let token_nonce = 0;
 
         let _ = Wormhole::at(wormhole_address)

@@ -1,5 +1,7 @@
 use aztec::macros::aztec;
 
+//Stripped down version of https://github.com/NethermindEth/wormhole/blob/aztec/aztec/contracts/src/main.nr
+
 #[aztec]
 pub contract DummyHole {
     use aztec::{
@@ -55,11 +57,11 @@ pub contract DummyHole {
     #[public]
     #[internal]
     fn _publish_message(nonce: u64, payloads: [[u8; 31]; 8], consistency: u8) -> u64 {
-        let sequence = storage.sequences.at(context.msg_sender()).read();
+        let sequence = storage.sequences.at(context.msg_sender().unwrap()).read();
         storage.sequences.at(context.msg_sender()).write(sequence + 1);
 
         let msg: [Field; 13] = [
-            context.msg_sender().to_field(),
+            context.msg_sender().unwrap().to_field(),
             sequence as Field,
             nonce as Field,
             consistency as Field,

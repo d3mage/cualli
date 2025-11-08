@@ -1,11 +1,9 @@
-import {
-  createLogger,
-  Fr,
-  Fq,
-  type PXE,
-  type Logger,
-  AccountManager,
-} from "@aztec/aztec.js";
+import { createLogger } from "@aztec/aztec.js/log";
+import type { Logger } from "@aztec/aztec.js/log";
+import { Fr } from "@aztec/aztec.js/fields";
+import { Fq } from "@aztec/aztec.js/fields";
+import type { PXE } from "@aztec/aztec.js/pxe";
+import { AccountManager } from "@aztec/aztec.js/account";
 import { getSchnorrAccount } from "@aztec/accounts/schnorr";
 import { SponsoredFeePaymentMethod } from "@aztec/aztec.js/fee/testing";
 import { SponsoredFPCContract } from "@aztec/noir-contracts.js/SponsoredFPC";

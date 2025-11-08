@@ -6,12 +6,12 @@ import {
   loadContractArtifact,
   type Logger,
   type NoirCompiledContract,
-  type PXE,
   type Wallet,
 } from "@aztec/aztec.js";
+import { PXE } from "@aztec/pxe/server";
 import { SponsoredFeePaymentMethod } from "@aztec/aztec.js/fee/testing";
 import RecoveryJson from "../../../target/recovery-Recovery.json" with { type: "json" };
-import DummyHoleJson from "../../../target/dummyhole-DummyHole.json" with { type: "json" };
+// import DummyHoleJson from "../../../target/dummyhole-DummyHole.json" with { type: "json" };
 import { getSponsoredFPCInstance } from "./fpc.ts";
 
 const logger: Logger = createLogger("aztec:deployment");
@@ -20,9 +20,9 @@ export const RecoveryContractArtifact = loadContractArtifact(
   RecoveryJson as NoirCompiledContract,
 );
 
-export const DummyHoleContractArtifact = loadContractArtifact(
-  DummyHoleJson as NoirCompiledContract,
-);
+// export const DummyHoleContractArtifact = loadContractArtifact(
+//   DummyHoleJson as NoirCompiledContract,
+// );
 
 export interface DeploymentOptions {
   wallet: Wallet;
@@ -40,48 +40,48 @@ export interface RecoveryDeploymentArgs {
  * @param options - Deployment options including wallet, PXE, and fee settings
  * @returns Deployed DummyHole contract instance
  */
-export async function deployDummyHole(
-  options: DeploymentOptions,
-): Promise<Contract> {
-  const { wallet, pxe } = options;
-  const ownerAddress = wallet.getAddress();
+// export async function deployDummyHole(
+//   options: DeploymentOptions,
+// ): Promise<Contract> {
+//   const { wallet, pxe } = options;
+//   const ownerAddress = wallet.getAddress();
 
-  logger.info("Deploying DummyHole contract...");
+//   logger.info("Deploying DummyHole contract...");
 
-  let sponsoredPaymentMethod: SponsoredFeePaymentMethod | undefined;
+//   let sponsoredPaymentMethod: SponsoredFeePaymentMethod | undefined;
 
-  const sponsoredFPC = await getSponsoredFPCInstance();
-  const contracts = await pxe.getContracts();
-  const isRegistered = contracts.some((c) => c.equals(sponsoredFPC.address));
+//   const sponsoredFPC = await getSponsoredFPCInstance();
+//   const contracts = await pxe.getContracts();
+//   const isRegistered = contracts.some((c) => c.equals(sponsoredFPC.address));
 
-  logger.info(
-    `Sponsored FPC contract ${isRegistered ? "already" : "not"} registered with PXE`,
-  );
+//   logger.info(
+//     `Sponsored FPC contract ${isRegistered ? "already" : "not"} registered with PXE`,
+//   );
 
-  sponsoredPaymentMethod = new SponsoredFeePaymentMethod(sponsoredFPC.address);
+//   sponsoredPaymentMethod = new SponsoredFeePaymentMethod(sponsoredFPC.address);
 
-  const deploymentOptions = {
-    from: ownerAddress,
-    fee: { paymentMethod: sponsoredPaymentMethod! },
-  };
+//   const deploymentOptions = {
+//     from: ownerAddress,
+//     fee: { paymentMethod: sponsoredPaymentMethod! },
+//   };
 
-  const dummyhole = await Contract.deploy(
-    wallet,
-    DummyHoleContractArtifact,
-    [], // DummyHole has no constructor arguments
-  )
-    .send(deploymentOptions)
-    .deployed();
+//   const dummyhole = await Contract.deploy(
+//     wallet,
+//     DummyHoleContractArtifact,
+//     [], // DummyHole has no constructor arguments
+//   )
+//     .send(deploymentOptions)
+//     .deployed();
 
-  await pxe.registerContract({
-    instance: dummyhole.instance,
-    artifact: DummyHoleContractArtifact,
-  });
+//   await pxe.registerContract({
+//     instance: dummyhole.instance,
+//     artifact: DummyHoleContractArtifact,
+//   });
 
-  logger.info(`✅ DummyHole deployed at ${dummyhole.address.toString()}`);
+//   logger.info(`✅ DummyHole deployed at ${dummyhole.address.toString()}`);
 
-  return dummyhole;
-}
+//   return dummyhole;
+// }
 
 /**
  * Deploys the Recovery contract
@@ -160,11 +160,11 @@ export async function getContractAt(
  * @param existingAddress - Optional existing contract address
  * @returns DummyHole contract instance
  */
-export async function getOrDeployDummyHole(
-  options: DeploymentOptions,
-): Promise<Contract> {
-  return await deployDummyHole(options);
-}
+// export async function getOrDeployDummyHole(
+//   options: DeploymentOptions,
+// ): Promise<Contract> {
+//   return await deployDummyHole(options);
+// }
 
 /**
  * Deploys or gets an existing Recovery contract

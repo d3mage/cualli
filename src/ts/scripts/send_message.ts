@@ -1,12 +1,10 @@
-import {
-  AztecAddress,
-  Contract,
-  loadContractArtifact,
-  type NoirCompiledContract,
-  createLogger,
-  type Logger,
-  FunctionSelector,
-} from "@aztec/aztec.js";
+import { AztecAddress } from "@aztec/aztec.js/addresses";
+import { Contract } from "@aztec/aztec.js/contract";
+import { loadContractArtifact } from "@aztec/aztec.js/abi";
+import type { NoirCompiledContract } from "@aztec/aztec.js/abi";
+import { createLogger } from "@aztec/aztec.js/log";
+import type { Logger } from "@aztec/aztec.js/log";
+import { FunctionSelector } from "@aztec/aztec.js/abi";
 import { SponsoredFeePaymentMethod } from "@aztec/aztec.js/fee/testing";
 import RecoveryJson from "../../../target/recovery-Recovery.json" with { type: "json" };
 import * as path from "path";
