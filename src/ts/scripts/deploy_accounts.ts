@@ -1,11 +1,12 @@
 import { deploySchnorrAccount } from "../utils/address.ts";
-import { setupPXE } from "../utils/setup_pxe.ts";
+import { setupWallet } from "../utils/wallet.ts";
 
 async function main() {
-  const pxe = await setupPXE();
+  const wallet0 = await setupWallet();
+  const wallet1 = await setupWallet();
 
-  await deploySchnorrAccount(pxe, "WALLET_A");
-  await deploySchnorrAccount(pxe, "WALLET_B");
+  await deploySchnorrAccount(wallet0, "wallet0");
+  await deploySchnorrAccount(wallet1, "wallet1");
 
   console.log("\nBoth wallets deployed and registered with PXE.");
   console.log("Done.");

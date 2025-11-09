@@ -608,7 +608,7 @@
   resolved "https://registry.yarnpkg.com/@aws/lambda-invoke-store/-/lambda-invoke-store-0.1.1.tgz#2e67f17040b930bde00a79ffb484eb9e77472b06"
   integrity sha512-RcLam17LdlbSOSp9VxmUu1eI6Mwxp+OwhD2QhiSNmNCzoDb0EeUXTD2n/WbcnrAYMGlmf05th6QYq23VqvJqpA==
 
-"@aztec/accounts@v3.0.0-devnet.3":
+"@aztec/accounts@3.0.0-devnet.3", "@aztec/accounts@v3.0.0-devnet.3":
   version "3.0.0-devnet.3"
   resolved "https://registry.yarnpkg.com/@aztec/accounts/-/accounts-3.0.0-devnet.3.tgz#1640377ef07d6c6087c19bb25476cc5837d5e046"
   integrity sha512-42FmJlDSXStT7YwLm5+r1I0Xf4+EeVGc5KaXFmA28YcR9ImTbUhCEAjELfT8v+gDL168uFuJUCgTG3KO6MdhAQ==
@@ -912,7 +912,7 @@
   resolved "https://registry.yarnpkg.com/@aztec/noir-acvm_js/-/noir-acvm_js-3.0.0-devnet.3.tgz#2c4624d08874adc5e18e11ff6db1f7a255171d75"
   integrity sha512-YuJxl4LUIK1UVxDzrXCO4Mwm7CZbnXw0zzDnla333M2TGRVocHtfKtJ1957ekaZB2gQk/i5OnB+139ldTgdSKg==
 
-"@aztec/noir-contracts.js@v3.0.0-devnet.3":
+"@aztec/noir-contracts.js@3.0.0-devnet.3", "@aztec/noir-contracts.js@v3.0.0-devnet.3":
   version "3.0.0-devnet.3"
   resolved "https://registry.yarnpkg.com/@aztec/noir-contracts.js/-/noir-contracts.js-3.0.0-devnet.3.tgz#7ae4ed4b816602f4bf5e290796cfd413b8222c51"
   integrity sha512-JSITZddjidPgltvYRjxpYpx4eaAPkOoY+chpTE/o0FXfnzKudr2Jzl/UAJU/d0+ecWSSw42Ls1QuCO6zGVbWNg==
@@ -993,7 +993,7 @@
     lodash.omit "^4.5.0"
     tslib "^2.4.0"
 
-"@aztec/pxe@v3.0.0-devnet.3":
+"@aztec/pxe@3.0.0-devnet.3", "@aztec/pxe@v3.0.0-devnet.3":
   version "3.0.0-devnet.3"
   resolved "https://registry.yarnpkg.com/@aztec/pxe/-/pxe-3.0.0-devnet.3.tgz#ec1c0c8defc089c4d2fcf6a574b501f283c14fb9"
   integrity sha512-mvghSf4K/BujOVRQcbV86aWeM4XZF6yhDliL0s1MRmgkvL5Ki3zGN1+60i5pRknYvcdVLpIf1UThG1DwxlSc+Q==
@@ -1109,6 +1109,19 @@
     "@opentelemetry/semantic-conventions" "^1.28.0"
     prom-client "^15.1.3"
     viem "npm:@spalladino/viem@2.38.2-eip7594.0"
+
+"@aztec/test-wallet@v3.0.0-devnet.3":
+  version "3.0.0-devnet.3"
+  resolved "https://registry.yarnpkg.com/@aztec/test-wallet/-/test-wallet-3.0.0-devnet.3.tgz#aa1197024b92b03e8d5ddbd1faaf9c365fbd7999"
+  integrity sha512-xFyW5cCPDy3K5Kyg5qucxE1B9h9HQ+KHDdKBjvLp8sIjwI4rCMV5pC9nCvW3cIhzeJz9TTduoj83U6rylyLbOQ==
+  dependencies:
+    "@aztec/accounts" "3.0.0-devnet.3"
+    "@aztec/aztec.js" "3.0.0-devnet.3"
+    "@aztec/entrypoints" "3.0.0-devnet.3"
+    "@aztec/foundation" "3.0.0-devnet.3"
+    "@aztec/noir-contracts.js" "3.0.0-devnet.3"
+    "@aztec/pxe" "3.0.0-devnet.3"
+    "@aztec/stdlib" "3.0.0-devnet.3"
 
 "@aztec/world-state@3.0.0-devnet.3":
   version "3.0.0-devnet.3"

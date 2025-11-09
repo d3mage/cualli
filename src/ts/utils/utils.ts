@@ -1,3 +1,5 @@
+import { AztecAddress } from "@aztec/aztec.js/addresses";
+import { TestWallet } from "@aztec/test-wallet/server";
 import { readFileSync } from "fs";
 
 export function hexAddressToU8x31(hex: string): Uint8Array {
@@ -30,4 +32,12 @@ export function readJson<T = any>(p: string): T | undefined {
   } catch {
     return undefined;
   }
+}
+
+export async function is_registered(
+  wallet: TestWallet,
+  address: AztecAddress,
+): Promise<boolean> {
+  const metadata = await wallet.getContractMetadata(address);
+  return !!metadata?.contractInstance;
 }

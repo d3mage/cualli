@@ -1,18 +1,25 @@
-import {
-  AztecAddress,
-  Contract,
-  type ContractArtifact,
-  createLogger,
-  loadContractArtifact,
-  type Logger,
-  type NoirCompiledContract,
-  type Wallet,
-} from "@aztec/aztec.js";
-import { PXE } from "@aztec/pxe/server";
 import { SponsoredFeePaymentMethod } from "@aztec/aztec.js/fee/testing";
 import RecoveryJson from "../../../target/recovery-Recovery.json" with { type: "json" };
 // import DummyHoleJson from "../../../target/dummyhole-DummyHole.json" with { type: "json" };
 import { getSponsoredFPCInstance } from "./fpc.ts";
+import {
+  loadContractArtifact,
+  type NoirCompiledContract,
+  type ContractArtifact,
+} from "@aztec/aztec.js/abi";
+import { AztecAddress } from "@aztec/aztec.js/addresses";
+import {
+  Contract,
+  type ContractInstanceWithAddress,
+  type DeployOptions,
+  getContractInstanceFromInstantiationParams,
+} from "@aztec/aztec.js/contracts";
+import { type Logger, createLogger } from "@aztec/aztec.js/log";
+import { TestWallet } from "@aztec/test-wallet/server";
+import { SponsoredFPCContract } from "@aztec/noir-contracts.js/SponsoredFPC";
+import { Fr } from "@aztec/aztec.js/fields";
+
+import * as fs from "fs";
 
 const logger: Logger = createLogger("aztec:deployment");
 
@@ -24,22 +31,128 @@ export const RecoveryContractArtifact = loadContractArtifact(
 //   DummyHoleJson as NoirCompiledContract,
 // );
 
-export interface DeploymentOptions {
-  wallet: Wallet;
-  pxe: PXE;
-}
-
 export interface RecoveryDeploymentArgs {
-  ownerAddress: string | AztecAddress;
-  wormholeAddress: string | AztecAddress;
+  ownerAddress: AztecAddress;
+  wormholeAddress: AztecAddress;
   threshold?: number;
 }
 
-/**
- * Deploys the DummyHole contract
- * @param options - Deployment options including wallet, PXE, and fee settings
- * @returns Deployed DummyHole contract instance
- */
+export async function deployRecovery(
+  wallet: TestWallet,
+  recoveryAddressFile: string,
+  recoveryParamsFile: string,
+  options: DeployOptions,
+  args: RecoveryDeploymentArgs,
+): Promise<Contract> {
+  const { ownerAddress, wormholeAddress, threshold = 3 } = args;
+
+  logger.info("Deploying Recovery contract...");
+  logger.info(`  Owner: ${ownerAddress}`);
+  logger.info(`  Wormhole: ${wormholeAddress}`);
+  logger.info(`  Threshold: ${threshold}`);
+
+  const sponsoredFPC = await getSponsoredFPCInstance();
+  await wallet.registerContract({
+    instance: sponsoredFPC,
+    artifact: SponsoredFPCContract.artifact,
+  });
+  const sponsoredPaymentMethod = new SponsoredFeePaymentMethod(
+    sponsoredFPC.address,
+  );
+
+  const recovery = await Contract.deploy(wallet, RecoveryContractArtifact, [
+    ownerAddress,
+    wormholeAddress,
+    threshold,
+  ])
+    .send({ ...options, fee: { paymentMethod: sponsoredPaymentMethod } })
+    .deployed();
+  await wallet.registerContract({
+    instance: recovery.instance,
+    artifact: RecoveryContractArtifact,
+  });
+
+  logger.info(`✅ Recovery deployed at ${recovery.address.toString()}`);
+
+  const deploymentParams = {
+    salt: recovery.instance.salt.toString(),
+    deployer: recovery.instance.deployer.toString(),
+    constructorArgs: [
+      ownerAddress.toString(),
+      wormholeAddress.toString(),
+      threshold.toString(),
+    ],
+  };
+
+  fs.writeFileSync(
+    recoveryAddressFile,
+    JSON.stringify({ recovery: recovery.address.toString() }, null, 2),
+  );
+  fs.writeFileSync(
+    recoveryParamsFile,
+    JSON.stringify(deploymentParams, null, 2),
+  );
+  logger.info(`💾 Deployment parameters saved to ${recoveryParamsFile}`);
+
+  return recovery;
+}
+
+export async function loadRecovery(
+  paramsFilePath: string,
+  artifact: ContractArtifact,
+): Promise<ContractInstanceWithAddress> {
+  return await getContractInstanceFromParamsFile(
+    paramsFilePath,
+    artifact,
+    processRecoveryConstructorArgs,
+  );
+}
+
+export async function getContractInstanceFromParamsFile(
+  paramsFilePath: string,
+  artifact: ContractArtifact,
+  processConstructorArgs: (args: string[]) => any,
+) {
+  logger.info(`📦 Loading deployment parameters from ${paramsFilePath}...`);
+
+  if (!fs.existsSync(paramsFilePath)) {
+    throw new Error(
+      `Deployment parameters file not found at ${paramsFilePath}`,
+    );
+  }
+
+  const paramsJson = JSON.parse(fs.readFileSync(paramsFilePath, "utf-8"));
+  const { salt, deployer, constructorArgs } = paramsJson;
+
+  if (!salt || !deployer || !constructorArgs) {
+    throw new Error(
+      "Missing required deployment parameters (salt, deployer, constructorArgs)",
+    );
+  }
+
+  logger.info("📦 Reconstructing contract instance from parameters...");
+
+  const processedArgs = processConstructorArgs(constructorArgs);
+
+  const instance = await getContractInstanceFromInstantiationParams(artifact, {
+    constructorArgs: processedArgs,
+    salt: Fr.fromString(salt),
+    deployer: AztecAddress.fromString(deployer),
+  });
+
+  logger.info("✅ Contract instance reconstructed successfully");
+
+  return instance;
+}
+
+function processRecoveryConstructorArgs(args: string[]): any[] {
+  return [
+    AztecAddress.fromString(args[0]),
+    AztecAddress.fromString(args[1]),
+    Number(args[2]),
+  ];
+}
+
 // export async function deployDummyHole(
 //   options: DeploymentOptions,
 // ): Promise<Contract> {
@@ -83,111 +196,28 @@ export interface RecoveryDeploymentArgs {
 //   return dummyhole;
 // }
 
-/**
- * Deploys the Recovery contract
- * @param options - Deployment options including wallet, PXE, and fee settings
- * @param args - Recovery contract constructor arguments
- * @returns Deployed Recovery contract instance
- */
-export async function deployRecovery(
-  options: DeploymentOptions,
-  args: RecoveryDeploymentArgs,
-): Promise<Contract> {
-  const { wallet, pxe } = options;
-  const { ownerAddress, wormholeAddress, threshold = 3 } = args;
-
-  logger.info("Deploying Recovery contract...");
-  logger.info(`  Owner: ${ownerAddress}`);
-  logger.info(`  Wormhole: ${wormholeAddress}`);
-  logger.info(`  Threshold: ${threshold}`);
-
-  let sponsoredPaymentMethod: SponsoredFeePaymentMethod | undefined;
-
-  const sponsoredFPC = await getSponsoredFPCInstance();
-  const contracts = await pxe.getContracts();
-  const isRegistered = contracts.some((c) => c.equals(sponsoredFPC.address));
-
-  logger.info(
-    `Sponsored FPC contract ${isRegistered ? "already" : "not"} registered with PXE`,
-  );
-
-  sponsoredPaymentMethod = new SponsoredFeePaymentMethod(sponsoredFPC.address);
-
-  const deploymentOptions = {
-    from: wallet.getAddress(),
-    fee: { paymentMethod: sponsoredPaymentMethod! },
-    timeout: 180,
-  };
-
-  const recovery = await Contract.deploy(wallet, RecoveryContractArtifact, [
-    ownerAddress,
-    wormholeAddress,
-    threshold,
-  ])
-    .send(deploymentOptions)
-    .deployed();
-
-  await pxe.registerContract({
-    instance: recovery.instance,
-    artifact: RecoveryContractArtifact,
-  });
-
-  logger.info(`✅ Recovery deployed at ${recovery.address.toString()}`);
-
-  return recovery;
-}
-
-/**
- * Gets an existing contract instance by address
- * @param address - Contract address
- * @param artifact - Contract artifact
- * @param wallet - Wallet to use for contract interactions
- * @returns Contract instance
- */
-export async function getContractAt(
-  address: string | AztecAddress,
-  artifact: ContractArtifact,
-  wallet: Wallet,
-): Promise<Contract> {
-  const contractAddr =
-    typeof address === "string" ? AztecAddress.fromString(address) : address;
-  return await Contract.at(contractAddr, artifact, wallet);
-}
-
-/**
- * Deploys or gets an existing DummyHole contract
- * @param options - Deployment options
- * @param existingAddress - Optional existing contract address
- * @returns DummyHole contract instance
- */
 // export async function getOrDeployDummyHole(
 //   options: DeploymentOptions,
 // ): Promise<Contract> {
 //   return await deployDummyHole(options);
 // }
 
-/**
- * Deploys or gets an existing Recovery contract
- * @param options - Deployment options
- * @param args - Recovery constructor arguments
- * @param existingAddress - Optional existing contract address
- * @returns Recovery contract instance
- */
-export async function getOrDeployRecovery(
-  options: DeploymentOptions,
-  args: RecoveryDeploymentArgs,
-  existingAddress?: string | AztecAddress,
-): Promise<Contract> {
-  if (existingAddress) {
-    logger.info(
-      `Using existing Recovery at: ${typeof existingAddress === "string" ? existingAddress : existingAddress.toString()}`,
-    );
-    return await getContractAt(
-      existingAddress,
-      RecoveryContractArtifact,
-      options.wallet,
-    );
-  }
+// export async function getOrDeployRecovery(
+//   wallet: TestWallet,
+//   options: DeployOptions,
+//   args: RecoveryDeploymentArgs,
+//   existingAddress?: string | AztecAddress,
+// ): Promise<Contract> {
+//   if (existingAddress) {
+//     logger.info(
+//       `Using existing Recovery at: ${typeof existingAddress === "string" ? existingAddress : existingAddress.toString()}`,
+//     );
+//     return await getContractAt(
+//       existingAddress,
+//       RecoveryContractArtifact,
+//       wallet,
+//     );
+//   }
 
-  return await deployRecovery(options, args);
-}
+//   return await deployRecovery(wallet, options, args);
+// }

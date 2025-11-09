@@ -1,63 +1,64 @@
 import { createLogger } from "@aztec/aztec.js/log";
 import type { Logger } from "@aztec/aztec.js/log";
-import { Fr } from "@aztec/aztec.js/fields";
-import { Fq } from "@aztec/aztec.js/fields";
-import type { PXE } from "@aztec/aztec.js/pxe";
-import { AccountManager } from "@aztec/aztec.js/account";
-import { getSchnorrAccount } from "@aztec/accounts/schnorr";
+import { Fr, GrumpkinScalar } from "@aztec/aztec.js/fields";
 import { SponsoredFeePaymentMethod } from "@aztec/aztec.js/fee/testing";
 import { SponsoredFPCContract } from "@aztec/noir-contracts.js/SponsoredFPC";
 import { getSponsoredFPCInstance } from "./fpc.ts";
 import * as fs from "fs";
 import * as path from "path";
+import { AccountManager } from "@aztec/aztec.js/wallet";
+import { TestWallet } from "@aztec/test-wallet/server";
+import { AztecAddress } from "@aztec/aztec.js/addresses";
 
 export async function deploySchnorrAccount(
-  pxe: PXE,
+  activeWallet: TestWallet,
   label: string,
   save: boolean = true,
 ): Promise<AccountManager> {
   const logger: Logger = createLogger("schnorr-account");
 
   logger.info("👤 Starting Schnorr account deployment...");
-  const sponsoredFPC = await getSponsoredFPCInstance();
-
-  const contracts = await pxe.getContracts();
-  const isRegistered = contracts.some((c) => c.equals(sponsoredFPC.address));
-  logger.info(
-    `Sponsored FPC contract ${isRegistered ? "already" : "not"} registered with PXE`,
-  );
-
-  await pxe.registerContract({
-    instance: sponsoredFPC,
-    artifact: SponsoredFPCContract.artifact,
-  });
-
-  const sponsoredPaymentMethod = new SponsoredFeePaymentMethod(
-    sponsoredFPC.address,
-  );
 
   logger.info("🔐 Generating account keys...");
-  const secretKey = Fr.random();
-  const signingKey = Fq.random();
-  const salt = Fr.random();
+  let secretKey = Fr.random();
+  let signingKey = GrumpkinScalar.random();
+  let salt = Fr.random();
   logger.info(`Save the following SECRET and SALT in .env for future use.`);
   logger.info(`🔑 Secret key generated: ${secretKey.toString()}`);
   logger.info(`🖊️ Signing key generated: ${signingKey.toString()}`);
   logger.info(`🧂 Salt generated: ${salt.toString()}`);
 
   logger.info("🏗️  Creating Schnorr account instance...");
-  const schnorrAccount = await getSchnorrAccount(
-    pxe,
+  const account = await activeWallet.createSchnorrAccount(
     secretKey,
-    signingKey,
     salt,
+    signingKey,
   );
-  const accountAddress = schnorrAccount.getAddress();
-  logger.info(`📍 Account address will be: ${accountAddress}`);
+  logger.info(`📍 Account address will be: ${account.address}`);
 
-  logger.info("⏳ Waiting for account deployment transaction to be mined...");
-  const tx = await schnorrAccount
-    .deploy({
+  const deployMethod = await account.getDeployMethod();
+
+  // Setup sponsored FPC
+  logger.info("💰 Setting up sponsored fee payment for account deployment...");
+  const sponsoredFPC = await getSponsoredFPCInstance();
+  logger.info(`💰 Sponsored FPC instance obtained at: ${sponsoredFPC.address}`);
+
+  logger.info("📝 Registering sponsored FPC contract with PXE...");
+  await activeWallet.registerContract({
+    instance: sponsoredFPC,
+    artifact: SponsoredFPCContract.artifact,
+  });
+  const sponsoredPaymentMethod = new SponsoredFeePaymentMethod(
+    sponsoredFPC.address,
+  );
+  logger.info(
+    "✅ Sponsored fee payment method configured for account deployment",
+  );
+
+  // Deploy account
+  let tx = await deployMethod
+    .send({
+      from: AztecAddress.ZERO,
       fee: { paymentMethod: sponsoredPaymentMethod },
     })
     .wait({ timeout: 120000 });
@@ -65,32 +66,9 @@ export async function deploySchnorrAccount(
   logger.info(`✅ Account deployment transaction successful!`);
   logger.info(`📋 Transaction hash: ${tx.txHash}`);
 
-  logger.info("👛 Getting wallet instance...");
-  const wallet = await schnorrAccount.getWallet();
-  const deployedAddress = wallet.getAddress();
-  logger.info(`✅ Wallet instance created for address: ${deployedAddress}`);
-
-  logger.info("🔍 Verifying account deployment...");
-  try {
-    const registeredAccounts = await pxe.getRegisteredAccounts();
-    const isRegistered = registeredAccounts.some((acc) =>
-      acc.address.equals(deployedAddress),
-    );
-
-    if (isRegistered) {
-      logger.info("✅ Account successfully registered with PXE");
-    } else {
-      logger.warn("⚠️  Account not found in registered accounts list");
-    }
-  } catch (error) {
-    logger.error(`❌ Account verification failed: ${error}`);
-  }
-
-  logger.info("🎉 Schnorr account deployment completed successfully!");
-
   if (save) {
     const accountData = {
-      address: deployedAddress.toString(),
+      address: account.address.toString(),
       secret: secretKey.toString(),
       signingKey: signingKey.toString(),
       salt: salt.toString(),
@@ -100,10 +78,13 @@ export async function deploySchnorrAccount(
     fs.writeFileSync(accountsFile, JSON.stringify(accountData, null, 2));
   }
 
-  return schnorrAccount;
+  return account;
 }
 
-export async function loadSchnorrAccount(label: string, pxe: PXE) {
+export async function loadSchnorrAccount(
+  activeWallet: TestWallet,
+  label: string,
+) {
   const accountsFile = path.join(process.cwd(), `../config/${label}.json`);
 
   if (!fs.existsSync(accountsFile)) {
@@ -112,11 +93,14 @@ export async function loadSchnorrAccount(label: string, pxe: PXE) {
 
   const accountData = JSON.parse(fs.readFileSync(accountsFile, "utf8"));
 
-  const secret = Fr.fromString(accountData.secret);
-  const signingKey = Fq.fromString(accountData.signingKey);
+  const secretKey = Fr.fromString(accountData.secret);
+  const signingKey = GrumpkinScalar.fromString(accountData.signingKey);
   const salt = Fr.fromString(accountData.salt);
 
-  const manager = await getSchnorrAccount(pxe, secret, signingKey, salt);
-  const wallet = await manager.getWallet();
-  return wallet;
+  const account = await activeWallet.createSchnorrAccount(
+    secretKey,
+    salt,
+    signingKey,
+  );
+  return account;
 }

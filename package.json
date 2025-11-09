@@ -24,6 +24,7 @@
     "@aztec/aztec.js": "v3.0.0-devnet.3",
     "@aztec/noir-contracts.js": "v3.0.0-devnet.3",
     "@aztec/pxe": "v3.0.0-devnet.3",
+    "@aztec/test-wallet": "v3.0.0-devnet.3",
     "@defi-wonderland/aztec-benchmark": "1.0.0"
   },
   "devDependencies": {

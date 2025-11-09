@@ -10,9 +10,9 @@ pub contract Recovery {
     use crate::notes::{AddressNote, VoteNote};
 
     use aztec::context::PrivateContext;
+    use aztec::keys::getters::get_public_keys;
     use aztec::macros::functions::{external, initializer};
     use aztec::macros::storage::storage;
-    use aztec::keys::getters::get_public_keys;
     use aztec::messages::message_delivery::MessageDelivery;
     use aztec::note::{
         note_getter_options::NoteGetterOptions, note_interface::NoteProperties,
@@ -85,7 +85,8 @@ pub contract Recovery {
 
         let owner = storage.config.read().owner;
         storage.votes.at(candidate).initialize(VoteNote::new(0, false, owner)).emit(
-            owner, MessageDelivery.CONSTRAINED_ONCHAIN
+            owner,
+            MessageDelivery.CONSTRAINED_ONCHAIN,
         );
     }
 
@@ -101,15 +102,19 @@ pub contract Recovery {
 
         let threshold = storage.threshold.get_current_value();
         let owner = storage.config.read().owner;
-        
-        storage.votes.at(candidate).replace(|vote_note| {
-            let votes = vote_note.get_votes() + 1;
-            let mut finished = false;
-            if votes as u32 >= threshold {
-                finished = true;
-            }
-            VoteNote::new(votes, finished, owner)
-        }).emit(owner, MessageDelivery.CONSTRAINED_ONCHAIN);
+
+        storage
+            .votes
+            .at(candidate)
+            .replace(|vote_note| {
+                let votes = vote_note.get_votes() + 1;
+                let mut finished = false;
+                if votes as u32 >= threshold {
+                    finished = true;
+                }
+                VoteNote::new(votes, finished, owner)
+            })
+            .emit(owner, MessageDelivery.CONSTRAINED_ONCHAIN);
 
         // if finished {
         //     send_wormhole_message_macro(&mut context, candidate);
