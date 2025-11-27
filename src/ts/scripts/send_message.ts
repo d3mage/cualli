@@ -30,7 +30,7 @@ const {
     process.cwd(),
     "../config/recovery_params.json",
   ),
-  DEST_ADDRESS = "0x510c0d85Fd5a54AA6bc1800Fa705b6607Eb3c49a",
+  DEST_ADDRESS = "0x0aA0D56F087Ee2EfA5FCfAf5d125Ae1DEAA8Fd02",
   DEST_CHAIN_ID = "421614",
   CANDIDATE_ETH = "0x1234567890abcdef1234567890abcdef12345678",
 } = process.env as Record<string, string>;
@@ -93,23 +93,15 @@ async function main() {
 
   logger.info(`Sending message with payload: ${msgArrays}`);
 
-  const sim = await recovery.methods
+  const tx = await recovery.methods
     .send_wormhole_message(CANDIDATE_ETH, msgArrays)
-    .simulate({
+    .send({
       from: ownerAddress,
       fee: { paymentMethod: sponsoredPaymentMethod },
-    });
-  return;
+    })
+    .wait({ timeout: 180 });
 
-  // const tx = await recovery.methods
-  //   .send_wormhole_message(CANDIDATE_ETH, msgArrays)
-  //   .send({
-  //     from: ownerWallet.getAddress(),
-  //     fee: { paymentMethod: sponsoredPaymentMethod },
-  //   })
-  //   .wait({ timeout: 180 });
-
-  // logger.info(`✅ Sent. txHash: ${tx.txHash}, block: ${tx.blockNumber}`);
+  logger.info(`✅ Sent. txHash: ${tx.txHash}, block: ${tx.blockNumber}`);
 }
 
 main().catch((err) => {

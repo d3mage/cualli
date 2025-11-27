@@ -20,11 +20,11 @@
     "*.ts": "prettier --write -u"
   },
   "dependencies": {
-    "@aztec/accounts": "v3.0.0-devnet.3",
-    "@aztec/aztec.js": "v3.0.0-devnet.3",
-    "@aztec/noir-contracts.js": "v3.0.0-devnet.3",
-    "@aztec/pxe": "v3.0.0-devnet.3",
-    "@aztec/test-wallet": "v3.0.0-devnet.3",
+    "@aztec/accounts": "v3.0.0-devnet.5",
+    "@aztec/aztec.js": "v3.0.0-devnet.5",
+    "@aztec/noir-contracts.js": "v3.0.0-devnet.5",
+    "@aztec/pxe": "v3.0.0-devnet.5",
+    "@aztec/test-wallet": "v3.0.0-devnet.5",
     "@defi-wonderland/aztec-benchmark": "1.0.0"
   },
   "devDependencies": {
@@ -41,7 +41,7 @@
     "vitest": "3.2.4"
   },
   "config": {
-    "aztecVersion": "v3.0.0-devnet.3"
+    "aztecVersion": "v3.0.0-devnet.5"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

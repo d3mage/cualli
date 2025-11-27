@@ -19,6 +19,9 @@ contract Orchestra {
     error MessageAlreadyConsumed();
 
     event MessageProcessed();
+    event Show(bytes data);
+
+    address public latestRecovered;
 
     constructor(address _wormhole) {
         wormholeAddress = _wormhole;
@@ -35,8 +38,6 @@ contract Orchestra {
 
     function verify(bytes memory encodedVm) external {
         bytes memory payload = _verify(encodedVm);
-
-
 
         _processPayload(payload);
     }
@@ -55,13 +56,14 @@ contract Orchestra {
     }
 
     function _processPayload(bytes memory payload) internal {
+        emit Show(payload);
         // require(!isFork(), "Invalid fork: expected chainID mismatch");
 
         // uint256 txIdOffset = 32;
 
         // Ensure payload is long enough (needs txId + amount data)
         // Minimum: 32 bytes (txId) + 95 bytes (to reach amount at offset 126) = 127 bytes
-        require(payload.length >= 127, "Payload too short");
+        // require(payload.length >= 127, "Payload too short");
 
         // Extract txId from the first 32 bytes
         bytes32 txId;
@@ -81,5 +83,6 @@ contract Orchestra {
             recoveredAddress := shr(96, addressData)
         }
         require(recoveredAddress != address(0), "Invalid address");
+        latestRecovered = recoveredAddress;
     }
 }
