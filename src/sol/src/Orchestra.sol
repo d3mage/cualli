@@ -3,7 +3,7 @@ pragma solidity 0.8.30;
 
 import {BytesLib} from "wormhole/ethereum/contracts/libraries/external/BytesLib.sol";
 import {IWormhole} from "wormhole/ethereum/contracts/interfaces/IWormhole.sol";
-import {console} from "forge-std/console.sol";
+import {PayloadExtractor, ParsedPayload} from "./PayloadExtractor.sol";
 
 contract Orchestra {
     using BytesLib for bytes;
@@ -23,9 +23,12 @@ contract Orchestra {
 
     address public latestRecovered;
 
+    PayloadExtractor private extractor;
+
     constructor(address _wormhole) {
         wormholeAddress = _wormhole;
         owner = msg.sender;
+        extractor = new PayloadExtractor();
     }
 
     // function isOwner(address _owner) internal view {
@@ -56,7 +59,6 @@ contract Orchestra {
     }
 
     function _processPayload(bytes memory payload) internal {
-        emit Show(payload);
         // require(!isFork(), "Invalid fork: expected chainID mismatch");
 
         // uint256 txIdOffset = 32;
@@ -66,23 +68,26 @@ contract Orchestra {
         // require(payload.length >= 127, "Payload too short");
 
         // Extract txId from the first 32 bytes
-        bytes32 txId;
-        assembly {
-            txId := mload(add(payload, 32)) // First 32 bytes are the txId
-        }
+        // bytes32 txId;
+        // assembly {
+        //     txId := mload(add(payload, 32)) // First 32 bytes are the txId
+        // }
 
-        require(txId != bytes32(0), InvalidTxID());
-        require(!consumedMessages[txId], MessageAlreadyConsumed());
-        consumedMessages[txId] = true;
+        // require(txId != bytes32(0), InvalidTxID());
+        // require(!consumedMessages[txId], MessageAlreadyConsumed());
+        // consumedMessages[txId] = true;
 
-        address recoveredAddress;
-        assembly {
-            // Load the 32 bytes after txId (which includes our 20 byte address)
-            let addressData := mload(add(payload, 64)) // 32 (data offset) + 32 (txId offset) = 64
-            // Shift right by 12 bytes (32 - 20) to align the address
-            recoveredAddress := shr(96, addressData)
-        }
-        require(recoveredAddress != address(0), "Invalid address");
-        latestRecovered = recoveredAddress;
+        // address recoveredAddress;
+        // assembly {
+        //     // Load the 32 bytes after txId (which includes our 20 byte address)
+        //     let addressData := mload(add(payload, 64)) // 32 (data offset) + 32 (txId offset) = 64
+        //     // Shift right by 12 bytes (32 - 20) to align the address
+        //     recoveredAddress := shr(96, addressData)
+        // }
+        // require(recoveredAddress != address(0), "Invalid address");
+
+        ParsedPayload memory extracted = extractor.parsePayload(payload);
+        
+        latestRecovered = extracted.addressField7;
     }
 }
