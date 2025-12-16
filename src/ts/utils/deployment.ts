@@ -27,10 +27,6 @@ export const RecoveryContractArtifact = loadContractArtifact(
   RecoveryJson as NoirCompiledContract,
 );
 
-// export const DummyHoleContractArtifact = loadContractArtifact(
-//   DummyHoleJson as NoirCompiledContract,
-// );
-
 export interface RecoveryDeploymentArgs {
   ownerAddress: AztecAddress;
   wormholeAddress: AztecAddress;

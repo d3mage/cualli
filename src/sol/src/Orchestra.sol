@@ -45,11 +45,8 @@ contract Orchestra {
         _processPayload(payload);
     }
 
-    function _verify(
-        bytes memory encodedVm
-    ) internal view returns (bytes memory) {
-        (IWormhole.VM memory vm, bool valid, string memory reason) = wormhole()
-            .parseAndVerifyVM(encodedVm);
+    function _verify(bytes memory encodedVm) internal view returns (bytes memory) {
+        (IWormhole.VM memory vm, bool valid, string memory reason) = wormhole().parseAndVerifyVM(encodedVm);
 
         require(valid, reason);
 
@@ -87,7 +84,7 @@ contract Orchestra {
         // require(recoveredAddress != address(0), "Invalid address");
 
         ParsedPayload memory extracted = extractor.parsePayload(payload);
-        
+
         latestRecovered = extracted.addressField7;
     }
 }

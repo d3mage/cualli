@@ -14,7 +14,8 @@
     "lint:prettier": "prettier '**/*.{js,ts}' --write",
     "build": "yarn compile && yarn codegen -f",
     "prepare": "husky",
-    "exc": "yarn build && yarn test"
+    "exc": "yarn build && yarn test",
+    "deploy:sepolia": "bash -c 'source .env && forge script Orchestra --rpc-url $SEPOLIA_RPC --account $DEPLOYER --broadcast --verify --chain sepolia -vvvvv'"
   },
   "lint-staged": {
     "*.ts": "prettier --write -u"

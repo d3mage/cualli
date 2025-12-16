@@ -30,8 +30,9 @@ const {
     process.cwd(),
     "../config/recovery_params.json",
   ),
-  DEST_ADDRESS = "0x31B807f791dCc3f86DDef5b31BA76F62c0eb832F",
-  DEST_CHAIN_ID = "421614",
+  DEST_ADDRESS = "0x0aA0D56F087Ee2EfA5FCfAf5d125Ae1DEAA8Fd02",
+  DEST_CHAIN_ID = "11155111",
+  // DEST_CHAIN_ID = "421614",
   CANDIDATE_ETH = "0x1234567890abcdef1234567890abcdef12345678",
 } = process.env as Record<string, string>;
 
