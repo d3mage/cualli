@@ -4,7 +4,17 @@ import { setupWallet } from "../utils/wallet.ts";
 import { AztecAddress } from "@aztec/aztec.js/addresses";
 
 import * as path from "path";
-import { readJson } from "../utils/utils.ts";
+import {
+  chainIdToU8x31,
+  hexAddressToU8x31,
+  readJson,
+  zeroU8x31,
+} from "../utils/utils.ts";
+
+const {
+  DEST_ADDRESS = "0x0aA0D56F087Ee2EfA5FCfAf5d125Ae1DEAA8Fd02",
+  DEST_CHAIN_ID = "11155111",
+} = process.env as Record<string, string>;
 
 async function main() {
   const RECOVERY_ADDRESS_FILE = path.join(
@@ -45,6 +55,15 @@ async function main() {
       ownerAddress,
       wormholeAddress,
       threshold: 1,
+      wormholeMessage: [
+        hexAddressToU8x31(DEST_ADDRESS),
+        chainIdToU8x31(DEST_CHAIN_ID),
+        zeroU8x31(),
+        zeroU8x31(),
+        zeroU8x31(),
+        zeroU8x31(),
+        zeroU8x31(),
+      ],
     },
   );
 }

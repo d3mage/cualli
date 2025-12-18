@@ -5,4 +5,5 @@ use std::meta::derive;
 pub struct Config {
     pub owner: AztecAddress,
     pub wormhole_address: AztecAddress,
+    pub wormhole_message: [[u8; 31]; 7],
 }

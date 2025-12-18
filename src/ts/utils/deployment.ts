@@ -31,6 +31,7 @@ export interface RecoveryDeploymentArgs {
   ownerAddress: AztecAddress;
   wormholeAddress: AztecAddress;
   threshold?: number;
+  wormholeMessage: Uint8Array[];
 }
 
 export async function deployRecovery(
@@ -40,7 +41,12 @@ export async function deployRecovery(
   options: DeployOptions,
   args: RecoveryDeploymentArgs,
 ): Promise<Contract> {
-  const { ownerAddress, wormholeAddress, threshold = 3 } = args;
+  const {
+    ownerAddress,
+    wormholeAddress,
+    threshold = 3,
+    wormholeMessage,
+  } = args;
 
   logger.info("Deploying Recovery contract...");
   logger.info(`  Owner: ${ownerAddress}`);
@@ -60,6 +66,7 @@ export async function deployRecovery(
     ownerAddress,
     wormholeAddress,
     threshold,
+    wormholeMessage,
   ])
     .send({ ...options, fee: { paymentMethod: sponsoredPaymentMethod } })
     .deployed();
@@ -77,6 +84,7 @@ export async function deployRecovery(
       ownerAddress.toString(),
       wormholeAddress.toString(),
       threshold.toString(),
+      wormholeMessage.map((msg) => Array.from(msg)),
     ],
   };
 
@@ -107,7 +115,7 @@ export async function loadRecovery(
 export async function getContractInstanceFromParamsFile(
   paramsFilePath: string,
   artifact: ContractArtifact,
-  processConstructorArgs: (args: string[]) => any,
+  processConstructorArgs: (args: any[]) => any,
 ) {
   logger.info(`📦 Loading deployment parameters from ${paramsFilePath}...`);
 
@@ -128,7 +136,7 @@ export async function getContractInstanceFromParamsFile(
 
   logger.info("📦 Reconstructing contract instance from parameters...");
 
-  const processedArgs = processConstructorArgs(constructorArgs);
+  const processedArgs = processConstructorArgs(constructorArgs as any[]);
 
   const instance = await getContractInstanceFromInstantiationParams(artifact, {
     constructorArgs: processedArgs,
@@ -141,11 +149,19 @@ export async function getContractInstanceFromParamsFile(
   return instance;
 }
 
-function processRecoveryConstructorArgs(args: string[]): any[] {
+function processRecoveryConstructorArgs(args: any[]): any[] {
+  const wormholeMessage = (args[3] as number[][] | undefined)?.map((msg) =>
+    Uint8Array.from(msg),
+  );
+  if (!wormholeMessage) {
+    throw new Error("Missing wormhole message in recovery constructor args");
+  }
+
   return [
-    AztecAddress.fromString(args[0]),
-    AztecAddress.fromString(args[1]),
-    Number(args[2]),
+    AztecAddress.fromString(args[0] as string),
+    AztecAddress.fromString(args[1] as string),
+    Number(args[2] as string | number),
+    wormholeMessage,
   ];
 }
 

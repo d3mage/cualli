@@ -8,13 +8,7 @@ import RecoveryJson from "../../../target/recovery-Recovery.json" with { type: "
 import * as path from "path";
 import { loadSchnorrAccount } from "../utils/address.ts";
 import { getSponsoredFPCInstance } from "../utils/fpc.ts";
-import {
-  readJson,
-  hexAddressToU8x31,
-  chainIdToU8x31,
-  zeroU8x31,
-  is_registered,
-} from "../utils/utils.ts";
+import { readJson, is_registered } from "../utils/utils.ts";
 import { Contract } from "@aztec/aztec.js/contracts";
 import { setupWallet } from "../utils/wallet.ts";
 import { SponsoredFPCContract } from "@aztec/noir-contracts.js/SponsoredFPC";
@@ -30,9 +24,6 @@ const {
     process.cwd(),
     "../config/recovery_params.json",
   ),
-  DEST_ADDRESS = "0x0aA0D56F087Ee2EfA5FCfAf5d125Ae1DEAA8Fd02",
-  DEST_CHAIN_ID = "11155111",
-  // DEST_CHAIN_ID = "421614",
   CANDIDATE_ETH = "0x1234567890abcdef1234567890abcdef12345678",
 } = process.env as Record<string, string>;
 
@@ -80,22 +71,10 @@ async function main() {
 
   const recovery = await Contract.at(recoveryAddress, RecoveryArtifact, wallet);
 
-  const msg0_dest = hexAddressToU8x31(DEST_ADDRESS);
-  const msg1_chain = chainIdToU8x31(DEST_CHAIN_ID);
-  const msgArrays: Uint8Array[] = [
-    msg0_dest,
-    msg1_chain,
-    zeroU8x31(),
-    zeroU8x31(),
-    zeroU8x31(),
-    zeroU8x31(),
-    zeroU8x31(),
-  ];
-
-  logger.info(`Sending message with payload: ${msgArrays}`);
+  logger.info(`Sending message for candidate ${CANDIDATE_ETH}`);
 
   const tx = await recovery.methods
-    .send_wormhole_message(CANDIDATE_ETH, msgArrays)
+    .send_wormhole_message(CANDIDATE_ETH)
     .send({
       from: ownerAddress,
       fee: { paymentMethod: sponsoredPaymentMethod },

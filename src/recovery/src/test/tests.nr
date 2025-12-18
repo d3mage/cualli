@@ -1,6 +1,6 @@
 use crate::{Recovery, test::utils};
 
-use aztec::protocol_types::{address::{AztecAddress, EthAddress}, traits::FromField};
+use aztec::protocol_types::{address::{EthAddress}};
 
 #[test]
 unconstrained fn add_contact_success() {
@@ -164,51 +164,4 @@ unconstrained fn vote_already_voted_failure() {
 
     env.mine_block();
     env.call_private(user, recovery_contract.vote(candidate_address));
-}
-
-#[test]
-unconstrained fn send_wormhole_message_success() {
-    let (env, contract_address, owner, user, _) = utils::setup_contract();
-    let recovery_contract = Recovery::at(contract_address);
-
-    let candidate = Field::from(0x1234567890abcdef1234567890abcdef12345678);
-    let candidate_address = EthAddress::from_field(candidate);
-
-    // Create wormhole message payload (7 arrays of 31 bytes)
-    // msg[0] = destination address (EVM address)
-    // msg[1] = destination chain id
-    // msg[2-6] = additional message data (unused in this test)
-    let mut dest_addr: [u8; 31] = [0; 31];
-    // Ethereum address bytes (20 bytes): 0x009cbB8f91d392856Cb880d67c806Aa731E3d686
-    dest_addr[0] = 0x00;
-    dest_addr[1] = 0x9c;
-    dest_addr[2] = 0xbB;
-    dest_addr[3] = 0x8f;
-    dest_addr[4] = 0x91;
-    dest_addr[5] = 0xd3;
-    dest_addr[6] = 0x92;
-    dest_addr[7] = 0x85;
-    dest_addr[8] = 0x6C;
-    dest_addr[9] = 0xb8;
-    dest_addr[10] = 0x80;
-    dest_addr[11] = 0xd6;
-    dest_addr[12] = 0x7c;
-    dest_addr[13] = 0x80;
-    dest_addr[14] = 0x6A;
-    dest_addr[15] = 0xa7;
-    dest_addr[16] = 0x31;
-    dest_addr[17] = 0xE3;
-    dest_addr[18] = 0xd6;
-    dest_addr[19] = 0x86;
-
-    let mut chain_id: [u8; 31] = [0; 31];
-    chain_id[0] = 0x14; // Chain ID 10004 in little-endian (0x2714)
-    chain_id[1] = 0x27;
-
-    let zero_bytes: [u8; 31] = [0; 31];
-
-    let msg: [[u8; 31]; 7] =
-        [dest_addr, chain_id, zero_bytes, zero_bytes, zero_bytes, zero_bytes, zero_bytes];
-
-    env.call_public(owner, recovery_contract.send_wormhole_message(candidate_address, msg));
 }

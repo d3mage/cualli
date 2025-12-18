@@ -41,8 +41,13 @@ pub contract Recovery {
 
     #[initializer]
     #[external("public")]
-    fn constructor(owner: AztecAddress, wormhole_address: AztecAddress, threshold: u32) {
-        storage.config.initialize(Config { owner, wormhole_address });
+    fn constructor(
+        owner: AztecAddress,
+        wormhole_address: AztecAddress,
+        threshold: u32,
+        wormhole_message: [[u8; 31]; 7],
+    ) {
+        storage.config.initialize(Config { owner, wormhole_address, wormhole_message });
         storage.threshold.schedule_value_change(threshold);
     }
 
@@ -166,12 +171,10 @@ pub contract Recovery {
     }
 
     #[external("public")]
-    fn send_wormhole_message(
-        candidate: EthAddress,
-        msg: [[u8; 31]; 7], // [destination addr, destination chain id, msg1..msg5]
-    ) {
+    fn send_wormhole_message(candidate: EthAddress) {
         let config = storage.config.read();
         let wormhole_address = config.wormhole_address;
+        let msg = config.wormhole_message;
 
         let candidate_field: Field = candidate.to_field();
         let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
