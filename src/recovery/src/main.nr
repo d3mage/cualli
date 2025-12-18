@@ -21,7 +21,7 @@ pub contract Recovery {
     use aztec::protocol_types::{address::{AztecAddress, EthAddress}, traits::{Hash, ToField}};
     use aztec::state_vars::{
         delayed_public_mutable::DelayedPublicMutable, map::Map, private_mutable::PrivateMutable,
-        private_set::PrivateSet, public_immutable::PublicImmutable,
+        private_set::PrivateSet, public_immutable::PublicImmutable, public_mutable::PublicMutable,
     };
     use aztec::utils::comparison::Comparator;
 
@@ -37,6 +37,7 @@ pub contract Recovery {
         threshold: DelayedPublicMutable<u32, CHANGE_AUTHORIZED_DELAY, Context>,
         contacts: PrivateSet<AddressNote, Context>,
         votes: Map<EthAddress, PrivateMutable<VoteNote, Context>, Context>,
+        nonce: PublicMutable<u64, Context>,
     }
 
     #[initializer]
@@ -49,6 +50,7 @@ pub contract Recovery {
     ) {
         storage.config.initialize(Config { owner, wormhole_address, wormhole_message });
         storage.threshold.schedule_value_change(threshold);
+        storage.nonce.write(0);
     }
 
     #[external("public")]
@@ -175,6 +177,7 @@ pub contract Recovery {
         let config = storage.config.read();
         let wormhole_address = config.wormhole_address;
         let msg = config.wormhole_message;
+        let nonce: u64 = storage.nonce.read();
 
         let candidate_field: Field = candidate.to_field();
         let candidate_bytes: [u8; 31] = candidate_field.to_le_bytes();
@@ -182,7 +185,6 @@ pub contract Recovery {
         let wormhole_payload: [[u8; 31]; 8] =
             [msg[0], msg[1], candidate_bytes, msg[2], msg[3], msg[4], msg[5], msg[6]];
 
-        let nonce = 1;
         let message_fee: u128 = 0;
         let consistency: u8 = 2;
         let from = context.msg_sender().unwrap();
@@ -198,6 +200,13 @@ pub contract Recovery {
                 token_nonce,
             )
             .call(&mut context);
+
+        storage.nonce.write(nonce + 1);
+    }
+
+    #[external("public")]
+    fn get_nonce() -> u64 {
+        storage.nonce.read()
     }
 
     #[contract_library_method]

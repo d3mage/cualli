@@ -1,6 +1,6 @@
 use crate::{Recovery, test::utils};
 
-use aztec::protocol_types::{address::{EthAddress}};
+use aztec::protocol_types::address::EthAddress;
 
 #[test]
 unconstrained fn add_contact_success() {
@@ -164,4 +164,21 @@ unconstrained fn vote_already_voted_failure() {
 
     env.mine_block();
     env.call_private(user, recovery_contract.vote(candidate_address));
+}
+
+#[test]
+unconstrained fn send_wormhole_message_updates_nonce() {
+    let (env, contract_address, owner, _user, _) = utils::setup_contract();
+    let recovery_contract = Recovery::at(contract_address);
+
+    let candidate = Field::from(0x1234567890abcdef1234567890abcdef12345678);
+    let candidate_address = EthAddress::from_field(candidate);
+
+    let nonce0 = env.call_public(owner, recovery_contract.get_nonce());
+    assert(nonce0 == 0, "Nonce should start at 0");
+
+    env.call_public(owner, recovery_contract.send_wormhole_message(candidate_address));
+
+    let nonce1 = env.call_public(owner, recovery_contract.get_nonce());
+    assert(nonce1 == 1, "Nonce should increment after sending");
 }

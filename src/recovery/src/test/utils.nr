@@ -1,5 +1,5 @@
 use crate::Recovery;
-use aztec::protocol_types::{address::{AztecAddress}};
+use aztec::protocol_types::address::AztecAddress;
 use aztec::test::helpers::test_environment::TestEnvironment;
 
 pub unconstrained fn setup_contract() -> (&mut TestEnvironment, AztecAddress, AztecAddress, AztecAddress, AztecAddress) {
